@@ -1,0 +1,25 @@
+package com.nuwan.weeklyreport.dto.request;
+
+import com.nuwan.weeklyreport.enums.ProjectStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateProjectRequest {
+    @NotBlank
+    private String name;
+
+    private String description;
+
+    @NotNull
+    private ProjectStatus status;
+
+    private List<String> memberIds;
+}
