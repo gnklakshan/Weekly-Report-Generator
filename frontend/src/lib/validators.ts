@@ -15,7 +15,7 @@ export const registerSchema = z
     email: z.string().min(1, "Email is required").email("Enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
-    role: z.enum(["TEAM_MEMBER", "MANAGER", "ADMIN"]),
+    role: z.enum(["TEAM_MEMBER", "ADMIN"]),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ["confirmPassword"],
@@ -132,7 +132,7 @@ export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 export const userFormSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),
-  role: z.enum(["TEAM_MEMBER", "MANAGER", "ADMIN"]),
+  role: z.enum(["TEAM_MEMBER", "ADMIN"]),
   jobTitle: z.string().min(2, "Job title is required"),
   projectIds: z.array(z.string()),
 });

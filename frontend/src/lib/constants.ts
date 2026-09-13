@@ -83,7 +83,6 @@ export const TASK_STATUSES: TaskStatus[] = ["NOT_STARTED", "IN_PROGRESS", "COMPL
 
 export const ROLE_LABEL: Record<UserRole, string> = {
   TEAM_MEMBER: "Team member",
-  MANAGER: "Manager",
   ADMIN: "Admin",
 };
 

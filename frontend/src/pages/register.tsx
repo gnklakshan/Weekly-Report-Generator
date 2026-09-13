@@ -23,13 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { registerSchema, type RegisterValues } from "@/lib/validators";
 import { APP_NAME, ROLE_LABEL } from "@/lib/constants";
 import { useAuth } from "@/hooks/use-auth";
 import type { UserRole } from "@/types";
 
-const roles: UserRole[] = ["TEAM_MEMBER", "MANAGER", "ADMIN"];
+const roles: UserRole[] = ["TEAM_MEMBER", "ADMIN"];
 
 export default function RegisterPage() {
   const { register, status } = useAuth();
@@ -69,17 +75,21 @@ export default function RegisterPage() {
           <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <NotebookPen className="size-4" aria-hidden="true" />
           </span>
-          <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
+          <span className="text-lg font-semibold tracking-tight">
+            {APP_NAME}
+          </span>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Create account</CardTitle>
-            <CardDescription>Demo sign-up — accounts live in this browser only.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="fullName"
@@ -87,12 +97,17 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Full name</FormLabel>
                       <FormControl>
-                        <Input autoComplete="name" placeholder="Jane Fernando" {...field} />
+                        <Input
+                          autoComplete="name"
+                          placeholder="Jane Fernando"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                {/* email */}
                 <FormField
                   control={form.control}
                   name="email"
@@ -111,13 +126,18 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
+
+                {/* Role selection */}
                 <FormField
                   control={form.control}
                   name="role"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Role</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a role" />
@@ -135,6 +155,8 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
+
+                {/* Password */}
                 <FormField
                   control={form.control}
                   name="password"
@@ -142,7 +164,11 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
+                        <Input
+                          type="password"
+                          autoComplete="new-password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,15 +181,26 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Confirm password</FormLabel>
                       <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
+                        <Input
+                          type="password"
+                          autoComplete="new-password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={form.formState.isSubmitting}
+                >
                   {form.formState.isSubmitting ? (
-                    <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+                    <Loader2
+                      className="mr-2 size-4 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : null}
                   Create account
                 </Button>
@@ -171,8 +208,11 @@ export default function RegisterPage() {
             </Form>
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
-              Already have an account? {" "}
-              <Link href="/login" className="font-medium text-primary hover:underline">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-primary hover:underline"
+              >
                 Sign in
               </Link>
             </p>

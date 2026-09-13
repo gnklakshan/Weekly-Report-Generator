@@ -20,14 +20,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loginSchema, type LoginValues } from "@/lib/validators";
 import { APP_NAME } from "@/lib/constants";
-import { DEMO_PASSWORD } from "@/data/mock-users";
 import { useAuth } from "@/hooks/use-auth";
 
-const demoAccounts = [
-  { label: "Team member", email: "member@example.com" },
-  { label: "Manager", email: "manager@example.com" },
-  { label: "Admin", email: "admin@example.com" },
-];
+
 
 export default function LoginPage() {
   const { login, status } = useAuth();
@@ -61,10 +56,6 @@ export default function LoginPage() {
     }
   }
 
-  function fillDemoAccount(email: string) {
-    form.setValue("email", email);
-    form.setValue("password", DEMO_PASSWORD);
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
@@ -148,28 +139,6 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-6 rounded-lg border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Demo accounts
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {demoAccounts.map((account) => (
-              <Button
-                key={account.email}
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => fillDemoAccount(account.email)}
-              >
-                {account.label}
-              </Button>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Demo data only — every account uses the password {" "}
-            <code className="font-mono">{DEMO_PASSWORD}</code>.
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-export type UserRole = "TEAM_MEMBER" | "MANAGER" | "ADMIN";
+export type UserRole = "TEAM_MEMBER" | "ADMIN";
 
 export type UserStatus = "ACTIVE" | "INVITED" | "DEACTIVATED";
 

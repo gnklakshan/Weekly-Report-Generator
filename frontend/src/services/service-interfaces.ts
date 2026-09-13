@@ -28,12 +28,7 @@ import type {
  * to the Spring Boot REST API without touching components or hooks.
  */
 
-export interface AuthService {
-  login(credentials: Credentials): Promise<AuthSession>;
-  register(input: RegisterInput): Promise<AuthSession>;
-  logout(): Promise<void>;
-  getSession(): Promise<AuthSession | null>;
-}
+
 
 export interface ReportsService {
   getReports(filters?: ReportFilters): Promise<Report[]>;

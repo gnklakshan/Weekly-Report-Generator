@@ -1,5 +1,4 @@
 import type { ActivityItem, Project, Report, User } from "@/types";
-import { mockUsers } from "@/data/mock-users";
 import { mockProjects } from "@/data/mock-projects";
 import { createMockReports } from "@/data/mock-reports";
 import { createMockActivity } from "@/data/mock-activity";
@@ -21,10 +20,10 @@ export interface MockDatabase {
 function seed(): MockDatabase {
   const reports = createMockReports();
   return {
-    users: mockUsers,
+    users: [],
     projects: mockProjects,
     reports,
-    activity: createMockActivity(reports, mockUsers),
+    activity: createMockActivity(reports, []),
   };
 }
 
