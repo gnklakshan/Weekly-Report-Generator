@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProjectDto {
+public class ProjectResponseDto {
     private String id;
     private String name;
     private String description;

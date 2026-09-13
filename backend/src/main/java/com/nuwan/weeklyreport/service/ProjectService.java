@@ -3,12 +3,13 @@ package com.nuwan.weeklyreport.service;
 import com.nuwan.weeklyreport.dao.repository.ProjectRepository;
 import com.nuwan.weeklyreport.dao.repository.UserRepository;
 import com.nuwan.weeklyreport.dto.request.CreateProjectRequest;
-import com.nuwan.weeklyreport.dto.response.ProjectDto;
+import com.nuwan.weeklyreport.dto.response.ProjectResponseDto;
 import com.nuwan.weeklyreport.dto.request.UpdateProjectRequest;
 import com.nuwan.weeklyreport.dao.entity.Project;
 import com.nuwan.weeklyreport.dao.entity.User;
 import com.nuwan.weeklyreport.enums.ProjectStatus;
 import com.nuwan.weeklyreport.exception.ResourceNotFoundException;
+import com.nuwan.weeklyreport.service.transformer.ProjectTransformer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,7 @@ public class ProjectService {
         this.userRepository = userRepository;
     }
 
-    public List<ProjectDto> getProjects(String search, ProjectStatus status) {
+    public List<ProjectResponseDto> getProjects(String search, ProjectStatus status) {
         List<Project> projects;
 
         if (search != null && !search.isBlank()) {
@@ -49,17 +50,17 @@ public class ProjectService {
                     .collect(Collectors.toList());
         }
 
-        return projects.stream().map(this::toDto).collect(Collectors.toList());
+        return projects.stream().map(ProjectTransformer::toDto).collect(Collectors.toList());
     }
 
-    public ProjectDto getProject(String id) {
+    public ProjectResponseDto getProject(String id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
-        return toDto(project);
+        return ProjectTransformer.toDto(project);
     }
 
     @Transactional
-    public ProjectDto createProject(CreateProjectRequest request) {
+    public ProjectResponseDto createProject(CreateProjectRequest request) {
         Project project = new Project();
         project.setId(UUID.randomUUID().toString());
         project.setName(request.getName());
@@ -82,11 +83,11 @@ public class ProjectService {
         }
 
         project = projectRepository.save(project);
-        return toDto(project);
+        return ProjectTransformer.toDto(project);
     }
 
     @Transactional
-    public ProjectDto updateProject(String id, UpdateProjectRequest request) {
+    public ProjectResponseDto updateProject(String id, UpdateProjectRequest request) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
 
@@ -107,7 +108,7 @@ public class ProjectService {
         }
 
         project = projectRepository.save(project);
-        return toDto(project);
+        return ProjectTransformer.toDto(project);
     }
 
     @Transactional
@@ -123,18 +124,4 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
-    private ProjectDto toDto(Project project) {
-        ProjectDto dto = new ProjectDto();
-        dto.setId(project.getId());
-        dto.setName(project.getName());
-        dto.setDescription(project.getDescription());
-        dto.setStatus(project.getStatus());
-        dto.setColorToken(project.getColorToken());
-        dto.setMemberIds(
-                project.getMembers() != null
-                        ? project.getMembers().stream().map(User::getId).toList()
-                        : List.of());
-        dto.setCreatedAt(project.getCreatedAt() != null ? project.getCreatedAt().toString() : null);
-        return dto;
-    }
 }

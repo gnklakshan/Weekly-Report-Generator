@@ -1,7 +1,7 @@
 package com.nuwan.weeklyreport.controller;
 
 import com.nuwan.weeklyreport.dto.request.CreateProjectRequest;
-import com.nuwan.weeklyreport.dto.response.ProjectDto;
+import com.nuwan.weeklyreport.dto.response.ProjectResponseDto;
 import com.nuwan.weeklyreport.dto.request.UpdateProjectRequest;
 import com.nuwan.weeklyreport.enums.ProjectStatus;
 import com.nuwan.weeklyreport.service.ProjectService;
@@ -22,8 +22,13 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    @PostMapping
+    public ResponseEntity<ProjectResponseDto> createProject(@Valid @RequestBody CreateProjectRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(request));
+    }
+
     @GetMapping
-    public ResponseEntity<List<ProjectDto>> getProjects(
+    public ResponseEntity<List<ProjectResponseDto>> getProjects(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status) {
 
@@ -34,18 +39,14 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectDto> getProject(@PathVariable String id) {
+    public ResponseEntity<ProjectResponseDto> getProject(@PathVariable String id) {
         return ResponseEntity.ok(projectService.getProject(id));
     }
 
-    @PostMapping
-    public ResponseEntity<ProjectDto> createProject(@Valid @RequestBody CreateProjectRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(request));
-    }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjectDto> updateProject(@PathVariable String id,
-                                                    @RequestBody UpdateProjectRequest request) {
+    public ResponseEntity<ProjectResponseDto> updateProject(@PathVariable String id,
+                                                            @RequestBody UpdateProjectRequest request) {
         return ResponseEntity.ok(projectService.updateProject(id, request));
     }
 
