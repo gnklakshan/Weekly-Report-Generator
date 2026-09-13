@@ -11,6 +11,7 @@ import com.nuwan.weeklyreport.enums.UserRole;
 import com.nuwan.weeklyreport.enums.UserStatus;
 import com.nuwan.weeklyreport.exception.ApiException;
 import com.nuwan.weeklyreport.exception.ResourceNotFoundException;
+import com.nuwan.weeklyreport.service.transformer.UserTransformer;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,8 @@ public class UserService {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
     }
+
+
 
     public List<UserResponseDto> getUsers(String search, UserRole role, UserStatus status) {
         List<User> users;
@@ -50,13 +53,13 @@ public class UserService {
                     .collect(Collectors.toList());
         }
 
-        return users.stream().map(this::toDto).collect(Collectors.toList());
+        return users.stream().map(UserTransformer::toUserResponseDto).collect(Collectors.toList());
     }
 
     public UserResponseDto getUser(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        return toDto(user);
+        return UserTransformer.toUserResponseDto(user);
     }
 
     @Transactional
@@ -89,7 +92,7 @@ public class UserService {
         }
 
         user = userRepository.save(user);
-        return toDto(user);
+        return UserTransformer.toUserResponseDto(user);
     }
 
     @Transactional
@@ -109,7 +112,7 @@ public class UserService {
         }
 
         user = userRepository.save(user);
-        return toDto(user);
+        return UserTransformer.toUserResponseDto(user);
     }
 
     @Transactional
@@ -125,21 +128,5 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    private UserResponseDto toDto(User user) {
-        UserResponseDto dto = new UserResponseDto();
-        dto.setId(user.getId());
-        dto.setFullName(user.getFullName());
-        dto.setEmail(user.getEmail());
-        dto.setRole(user.getRole());
-        dto.setStatus(user.getStatus());
-        dto.setJobTitle(user.getJobTitle());
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setProjectIds(
-                user.getProjects() != null
-                        ? user.getProjects().stream().map(Project::getId).toList()
-                        : List.of());
-        dto.setManagerId(user.getManager() != null ? user.getManager().getId() : null);
-        dto.setJoinedAt(user.getJoinedAt() != null ? user.getJoinedAt().toString() : null);
-        return dto;
-    }
+
 }
