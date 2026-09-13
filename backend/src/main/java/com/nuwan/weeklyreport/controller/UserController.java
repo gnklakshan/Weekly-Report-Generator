@@ -2,7 +2,7 @@ package com.nuwan.weeklyreport.controller;
 
 import com.nuwan.weeklyreport.dto.request.CreateUserRequest;
 import com.nuwan.weeklyreport.dto.request.UpdateUserRequest;
-import com.nuwan.weeklyreport.dto.response.UserDto;
+import com.nuwan.weeklyreport.dto.response.UserResponseDto;
 import com.nuwan.weeklyreport.enums.UserRole;
 import com.nuwan.weeklyreport.enums.UserStatus;
 import com.nuwan.weeklyreport.service.UserService;
@@ -24,7 +24,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getUsers(
+    public ResponseEntity<List<UserResponseDto>> getUsers(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status) {
@@ -37,18 +37,18 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable String id) {
+    public ResponseEntity<UserResponseDto> getUser(@PathVariable String id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody CreateUserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(@PathVariable String id,
-                                              @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id,
+                                                      @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { FolderKanban, Plus, SearchX } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,32 +10,28 @@ import { LoadingState } from "@/components/common/loading-state";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useUsers } from "@/hooks/use-users";
+import { useApi } from "@/hooks/use-api";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 import { ProjectFiltersBar } from "./project-filters";
 import { ProjectFormDialog } from "./project-form-dialog";
 import { ProjectTable } from "./project-table";
 import { ALL_STATUSES } from "./project-options";
-import type { Project, ProjectFilters } from "@/types";
+import type { Project, ProjectFilters, User } from "@/types";
 import type { ProjectFormValues } from "@/lib/validators";
 
 export function ProjectsManager() {
   const { hasPermission } = useAuth();
   const canManage = hasPermission("MANAGE_PROJECTS");
 
-  const {
-    projects,
-    filters,
-    isLoading: isProjectsLoading,
-    error: projectsError,
-    refetch,
-    setFilters,
-    createProject,
-    updateProject,
-    deleteProject,
-  } = useProjects();
-  const { users, isLoading: isUsersLoading, error: usersError } = useUsers();
+  const { request } = useApi();
+
+  // Local state for projects and users
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filters, setFilters] = useState<ProjectFilters>({});
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+
+  const [users, setUsers] = useState<User[]>([]);
 
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -43,7 +39,50 @@ export function ProjectsManager() {
   const [pendingDelete, setPendingDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Clamped so removing the last row of the final page never shows an empty page.
+  // Fetch Projects
+  const fetchProjects = useCallback(async () => {
+    setIsProjectsLoading(true);
+    setProjectsError(null);
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.search) queryParams.append("search", filters.search);
+      if (filters.status && filters.status !== (ALL_STATUSES as any)) {
+        queryParams.append("status", filters.status);
+      }
+      const queryString = queryParams.toString()
+        ? `?${queryParams.toString()}`
+        : "";
+
+      const data = await request<Project[]>(`/api/projects${queryString}`);
+      console.log("Fetched projects:", data); // Debug log
+      setProjects(data);
+    } catch (err) {
+      setProjectsError(
+        err instanceof Error ? err.message : "Failed to load projects.",
+      );
+    } finally {
+      setIsProjectsLoading(false);
+    }
+  }, [filters, request]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  // Fetch Users
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        // Assume users API is available at /api/users
+        const data = await request<User[]>("/api/users");
+        setUsers(data);
+      } catch {
+        // Projects remain usable when the optional member lookup fails.
+      }
+    }
+    fetchUsers();
+  }, [request]);
+
   const pageCount = Math.max(1, Math.ceil(projects.length / DEFAULT_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
 
@@ -52,7 +91,6 @@ export function ProjectsManager() {
     return projects.slice(start, start + DEFAULT_PAGE_SIZE);
   }, [projects, currentPage]);
 
-  /** Every filter change goes through here, so the page resets with it — no effect needed. */
   function updateFilters(updates: Partial<ProjectFilters>) {
     setPage(1);
     setFilters((previous) => ({ ...previous, ...updates }));
@@ -68,17 +106,32 @@ export function ProjectsManager() {
     setIsFormOpen(true);
   }
 
-  /** Throws on failure so ProjectFormDialog keeps itself open and shows the error. */
   async function handleSubmit(values: ProjectFormValues) {
-    if (editing) {
-      await updateProject(editing.id, values);
-      toast.success(`Project "${values.name}" updated.`);
-    } else {
-      await createProject(values);
-      toast.success(`Project "${values.name}" created.`);
+    try {
+      if (editing) {
+        const updated = await request<Project>(`/api/projects/${editing.id}`, {
+          method: "PUT",
+          body: JSON.stringify(values),
+        });
+        setProjects((prev) =>
+          prev.map((p) => (p.id === editing.id ? updated : p)),
+        );
+        toast.success(`Project "${values.name}" updated.`);
+      } else {
+        const created = await request<Project>("/api/projects", {
+          method: "POST",
+          body: JSON.stringify(values),
+        });
+        setProjects((prev) => [...prev, created]);
+        toast.success(`Project "${values.name}" created.`);
+      }
+      setIsFormOpen(false);
+      setEditing(null);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred.";
+      // Throw so ProjectFormDialog catches it
+      throw new Error(msg);
     }
-    setIsFormOpen(false);
-    setEditing(null);
   }
 
   async function handleDelete() {
@@ -86,19 +139,28 @@ export function ProjectsManager() {
     const target = pendingDelete;
     setIsDeleting(true);
     try {
-      await deleteProject(target.id);
+      await request(`/api/projects/${target.id}`, { method: "DELETE" });
+      setProjects((prev) => prev.filter((p) => p.id !== target.id));
       toast.success(`Project "${target.name}" deleted.`);
       setPendingDelete(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not delete the project.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not delete the project.",
+      );
     } finally {
       setIsDeleting(false);
     }
   }
 
-  const isLoading = isProjectsLoading || isUsersLoading;
-  const error = projectsError ?? usersError;
-  const isFiltered = Boolean(filters.search) || Boolean(filters.status && filters.status !== ALL_STATUSES);
+  // Projects can render without the optional member directory being ready.
+  // A failed users request must not hide successfully loaded projects.
+  const isLoading = isProjectsLoading;
+  const error = projectsError;
+  const isFiltered =
+    Boolean(filters.search) ||
+    Boolean(filters.status && filters.status !== ALL_STATUSES);
 
   return (
     <>
@@ -119,22 +181,31 @@ export function ProjectsManager() {
         <ProjectFiltersBar filters={filters} onChange={updateFilters} />
 
         {error ? (
-          <ErrorState message={error} onRetry={() => void refetch()} />
+          <ErrorState message={error} onRetry={() => void fetchProjects()} />
         ) : isLoading ? (
           <LoadingState rows={DEFAULT_PAGE_SIZE} type="table" />
         ) : projects.length === 0 ? (
           <EmptyState
             icon={isFiltered ? SearchX : FolderKanban}
-            title={isFiltered ? "No projects match your filters" : "No projects yet"}
+            title={
+              isFiltered ? "No projects match your filters" : "No projects yet"
+            }
             description={
               isFiltered
                 ? "Try a different search term or clear the status filter."
                 : "Create the first project so team members can report weekly work against it."
             }
-            actionLabel={isFiltered ? "Clear filters" : canManage ? "Add project" : undefined}
+            actionLabel={
+              isFiltered
+                ? "Clear filters"
+                : canManage
+                  ? "Add project"
+                  : undefined
+            }
             onAction={
               isFiltered
-                ? () => updateFilters({ search: undefined, status: ALL_STATUSES })
+                ? () =>
+                    updateFilters({ search: undefined, status: ALL_STATUSES })
                 : canManage
                   ? openCreate
                   : undefined

@@ -8,8 +8,8 @@ import { EMPTY_HOURS, TASK_TYPES } from "@/lib/constants";
 import { currentWeekRange, formatWeekRange, shiftWeek } from "@/lib/date";
 import { createId } from "@/lib/id";
 import { canEditReport } from "@/lib/permissions";
-import { reportsService } from "@/services";
 import { useAuth } from "@/hooks/use-auth";
+import { useApi } from "@/hooks/use-api";
 import type {
   Achievement,
   Blocker,
@@ -156,6 +156,7 @@ interface UseReportFormOptions {
 export function useReportForm(options: UseReportFormOptions = {}) {
   const { report, initialValues, onSaved } = options;
   const { user } = useAuth();
+  const { request } = useApi();
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -245,10 +246,18 @@ export function useReportForm(options: UseReportFormOptions = {}) {
       setSaveError(null);
       try {
         const saved = report
-          ? await reportsService.updateReport(report.id, formValuesToUpdateInput(values))
-          : await reportsService.createReport(formValuesToCreateInput(values, user.id));
+          ? await request<Report>(`/api/reports/${report.id}`, {
+              method: "PUT",
+              body: JSON.stringify(formValuesToUpdateInput(values))
+            })
+          : await request<Report>(`/api/reports`, {
+              method: "POST",
+              body: JSON.stringify(formValuesToCreateInput(values, user.id))
+            });
         const finalReport =
-          action === "SUBMIT" ? await reportsService.submitReport(saved.id) : saved;
+          action === "SUBMIT" 
+            ? await request<Report>(`/api/reports/${saved.id}/submit`, { method: "POST" }) 
+            : saved;
         form.reset(reportToFormValues(finalReport));
         onSaved?.(finalReport, action);
         return finalReport;
@@ -261,7 +270,7 @@ export function useReportForm(options: UseReportFormOptions = {}) {
         setIsSaving(false);
       }
     },
-    [form, onSaved, report, user],
+    [form, onSaved, report, user, request],
   );
 
   const save = useCallback(

@@ -4,7 +4,7 @@ import com.nuwan.weeklyreport.dao.repository.ProjectRepository;
 import com.nuwan.weeklyreport.dao.repository.UserRepository;
 import com.nuwan.weeklyreport.dto.request.CreateUserRequest;
 import com.nuwan.weeklyreport.dto.request.UpdateUserRequest;
-import com.nuwan.weeklyreport.dto.response.UserDto;
+import com.nuwan.weeklyreport.dto.response.UserResponseDto;
 import com.nuwan.weeklyreport.dao.entity.Project;
 import com.nuwan.weeklyreport.dao.entity.User;
 import com.nuwan.weeklyreport.enums.UserRole;
@@ -30,7 +30,7 @@ public class UserService {
         this.projectRepository = projectRepository;
     }
 
-    public List<UserDto> getUsers(String search, UserRole role, UserStatus status) {
+    public List<UserResponseDto> getUsers(String search, UserRole role, UserStatus status) {
         List<User> users;
 
         if (search != null && !search.isBlank()) {
@@ -53,14 +53,14 @@ public class UserService {
         return users.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    public UserDto getUser(String id) {
+    public UserResponseDto getUser(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         return toDto(user);
     }
 
     @Transactional
-    public UserDto createUser(CreateUserRequest request) {
+    public UserResponseDto createUser(CreateUserRequest request) {
         if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new ApiException("Email already registered", HttpStatus.CONFLICT);
         }
@@ -93,7 +93,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto updateUser(String id, UpdateUserRequest request) {
+    public UserResponseDto updateUser(String id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
@@ -125,8 +125,8 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    private UserDto toDto(User user) {
-        UserDto dto = new UserDto();
+    private UserResponseDto toDto(User user) {
+        UserResponseDto dto = new UserResponseDto();
         dto.setId(user.getId());
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());

@@ -1,7 +1,7 @@
 import type { UserRole, UserStatus } from "@/types";
 
 /** Ordered to match ROLE_LABEL / USER_STATUS_LABEL key order. */
-export const USER_ROLES: UserRole[] = ["TEAM_MEMBER", "MANAGER", "ADMIN"];
+export const USER_ROLES: UserRole[] = ["TEAM_MEMBER", "ADMIN"];
 export const USER_STATUSES: UserStatus[] = ["ACTIVE", "INVITED", "DEACTIVATED"];
 
 /** Sentinel used by the role/status filters — never sent as a real value. */

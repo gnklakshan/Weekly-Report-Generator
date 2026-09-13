@@ -3,7 +3,7 @@ package com.nuwan.weeklyreport.controller;
 import com.nuwan.weeklyreport.dto.response.AuthResponse;
 import com.nuwan.weeklyreport.dto.request.LoginRequest;
 import com.nuwan.weeklyreport.dto.request.RegisterRequest;
-import com.nuwan.weeklyreport.dto.response.UserDto;
+import com.nuwan.weeklyreport.dto.response.UserResponseDto;
 import com.nuwan.weeklyreport.dao.entity.User;
 import com.nuwan.weeklyreport.service.AuthService;
 import jakarta.validation.Valid;
@@ -40,7 +40,7 @@ public class AuthController {
     }
 
     @GetMapping("/session")
-    public ResponseEntity<UserDto> getSession(@AuthenticationPrincipal User user) {
+    public ResponseEntity<UserResponseDto> getSession(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.status(401).build();
         }

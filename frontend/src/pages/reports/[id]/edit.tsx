@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Lock } from "lucide-react";
@@ -13,10 +13,8 @@ import { LoadingState } from "@/components/common/loading-state";
 import { ReportStatusBadge } from "@/components/reports/report-status-badge";
 import { ReportForm } from "@/components/reports/form/report-form";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useReport } from "@/hooks/use-report";
+import { useApi } from "@/hooks/use-api";
 import { useReportForm, type ReportFormAction } from "@/hooks/use-report-form";
-import { useUsers } from "@/hooks/use-users";
 import { canEditReport } from "@/lib/permissions";
 import { latestCorrection } from "@/lib/report";
 import { Button } from "@/components/ui/button";
@@ -90,10 +88,13 @@ function ReportLocked({ report }: { report: Report }) {
           <Lock className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold">This report can no longer be edited</h2>
+          <h2 className="text-base font-semibold">
+            This report can no longer be edited
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Only your own drafts and reports sent back for correction can be changed. This one is
-            currently <ReportStatusBadge status={report.status} />.
+            Only your own drafts and reports sent back for correction can be
+            changed. This one is currently{" "}
+            <ReportStatusBadge status={report.status} />.
           </p>
         </div>
         <Button asChild variant="outline">
@@ -106,12 +107,38 @@ function ReportLocked({ report }: { report: Report }) {
 
 function ReportEditScreen({ reportId }: { reportId: string }) {
   const { user } = useAuth();
-  const { report, isLoading, error, refetch } = useReport(reportId);
-  const { projects } = useProjects({ status: "ACTIVE" });
-  const { users } = useUsers();
+  const { request } = useApi();
+  const [report, setReport] = useState<Report | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setReport(await request<Report>(`/api/reports/${reportId}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load report.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [reportId, request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+  useEffect(() => {
+    request<Project[]>("/api/projects?status=ACTIVE")
+      .then(setProjects)
+      .catch(() => {});
+    request<User[]>("/api/users")
+      .then(setUsers)
+      .catch(() => {});
+  }, [request]);
 
   if (isLoading) return <LoadingState type="detail" />;
-  if (error) return <ErrorState message={error} onRetry={() => void refetch()} />;
+  if (error)
+    return <ErrorState message={error} onRetry={() => void refetch()} />;
   if (!report) {
     return (
       <ErrorState
@@ -127,7 +154,8 @@ function ReportEditScreen({ reportId }: { reportId: string }) {
 
 export default function ReportEditPage() {
   const router = useRouter();
-  const reportId = typeof router.query.id === "string" ? router.query.id : undefined;
+  const reportId =
+    typeof router.query.id === "string" ? router.query.id : undefined;
 
   return (
     <RequirePermission permissions={["EDIT_OWN_REPORT"]}>
@@ -137,7 +165,10 @@ export default function ReportEditPage() {
           description="Update the report and resubmit it for your manager's review."
           breadcrumbs={[
             { label: "Reports", href: "/reports" },
-            { label: "Report detail", href: reportId ? `/reports/${reportId}` : undefined },
+            {
+              label: "Report detail",
+              href: reportId ? `/reports/${reportId}` : undefined,
+            },
             { label: "Edit" },
           ]}
         />

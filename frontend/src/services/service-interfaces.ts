@@ -45,13 +45,7 @@ export interface ReviewsService {
   requestCorrection(input: RequestCorrectionInput): Promise<Report>;
 }
 
-export interface ProjectsService {
-  getProjects(filters?: ProjectFilters): Promise<Project[]>;
-  getProject(id: string): Promise<Project | null>;
-  createProject(data: CreateProjectInput): Promise<Project>;
-  updateProject(id: string, data: UpdateProjectInput): Promise<Project>;
-  deleteProject(id: string): Promise<void>;
-}
+
 
 export interface UsersService {
   getUsers(filters?: UserFilters): Promise<User[]>;

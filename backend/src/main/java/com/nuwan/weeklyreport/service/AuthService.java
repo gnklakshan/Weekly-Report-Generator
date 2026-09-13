@@ -5,7 +5,7 @@ import com.nuwan.weeklyreport.dao.repository.UserRepository;
 import com.nuwan.weeklyreport.dto.response.AuthResponse;
 import com.nuwan.weeklyreport.dto.request.LoginRequest;
 import com.nuwan.weeklyreport.dto.request.RegisterRequest;
-import com.nuwan.weeklyreport.dto.response.UserDto;
+import com.nuwan.weeklyreport.dto.response.UserResponseDto;
 import com.nuwan.weeklyreport.dao.entity.User;
 import com.nuwan.weeklyreport.enums.UserStatus;
 import com.nuwan.weeklyreport.exception.ApiException;
@@ -92,7 +92,7 @@ public class AuthService {
     }
 
     //check the current logged‑in user’s session
-    public UserDto getSession(String userId) {
+    public UserResponseDto getSession(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("Session expired", HttpStatus.UNAUTHORIZED));
         return UserTransformer.toUserDto(user);

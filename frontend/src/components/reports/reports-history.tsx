@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { FileText, Plus } from "lucide-react";
@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/button";
 import { ReportFiltersBar } from "./report-filters";
 import { ReportTable } from "./report-table";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useReports } from "@/hooks/use-reports";
-import { useUsers } from "@/hooks/use-users";
+import { useApi } from "@/hooks/use-api";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
-import type { ReportFilters } from "@/types";
+import type { Project, Report, ReportFilters, User } from "@/types";
 
 /**
  * Report history. Team members see their own reports only; managers and admins
@@ -30,19 +28,59 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
   const canViewTeam = hasPermission("VIEW_TEAM_REPORTS");
   const canCreate = hasPermission("CREATE_REPORT");
 
-  const { projects } = useProjects();
-  const { users } = useUsers();
-  const { reports, filters, isLoading, error, refetch, updateFilters, deleteReport } = useReports({
+  const { request } = useApi();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [filters, setFilters] = useState<ReportFilters>({
     search: initialSearch,
     authorId: canViewTeam ? undefined : user?.id,
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const query = new URLSearchParams();
+      if (filters.search) query.set("search", filters.search);
+      if (filters.status) query.set("status", filters.status);
+      if (filters.projectId) query.set("projectId", filters.projectId);
+      if (filters.authorId) query.set("authorId", filters.authorId);
+      if (filters.from) query.set("from", filters.from);
+      if (filters.to) query.set("to", filters.to);
+      const suffix = query.toString() ? `?${query}` : "";
+      setReports(await request<Report[]>(`/api/reports${suffix}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load reports.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters, request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+  useEffect(() => {
+    request<Project[]>("/api/projects")
+      .then(setProjects)
+      .catch(() => {});
+  }, [request]);
+  useEffect(() => {
+    request<User[]>("/api/users")
+      .then(setUsers)
+      .catch(() => {});
+  }, [request]);
+  const deleteReport = async (id: string) => {
+    await request(`/api/reports/${id}`, { method: "DELETE" });
+    setReports((previous) => previous.filter((report) => report.id !== id));
+  };
 
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   function handleFilterChange(updates: Partial<ReportFilters>) {
-    updateFilters(updates);
+    setFilters((previous) => ({ ...previous, ...updates }));
     setPage(1);
   }
 
@@ -68,7 +106,11 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
   );
 
   const hasActiveFilters = Boolean(
-    filters.search || filters.status || filters.projectId || filters.from || filters.to,
+    filters.search ||
+    filters.status ||
+    filters.projectId ||
+    filters.from ||
+    filters.to,
   );
 
   return (
@@ -107,7 +149,11 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
         ) : reports.length === 0 ? (
           <EmptyState
             icon={FileText}
-            title={hasActiveFilters ? "No reports match those filters" : "No reports yet"}
+            title={
+              hasActiveFilters
+                ? "No reports match those filters"
+                : "No reports yet"
+            }
             description={
               hasActiveFilters
                 ? "Try widening the date range or clearing the search to see more reports."
@@ -177,8 +223,15 @@ export function ReportsHistory() {
   const router = useRouter();
 
   // Query params are empty until hydration, so wait before seeding the filters.
-  if (!router.isReady) return <LoadingState type="table" rows={DEFAULT_PAGE_SIZE} />;
+  if (!router.isReady)
+    return <LoadingState type="table" rows={DEFAULT_PAGE_SIZE} />;
 
-  const initialSearch = typeof router.query.search === "string" ? router.query.search : undefined;
-  return <ReportsHistoryView key={initialSearch ?? "all"} initialSearch={initialSearch} />;
+  const initialSearch =
+    typeof router.query.search === "string" ? router.query.search : undefined;
+  return (
+    <ReportsHistoryView
+      key={initialSearch ?? "all"}
+      initialSearch={initialSearch}
+    />
+  );
 }

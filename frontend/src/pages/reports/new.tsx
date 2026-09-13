@@ -1,4 +1,10 @@
-import { useMemo, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactElement,
+} from "react";
 import { useRouter } from "next/router";
 import { toast } from "sonner";
 
@@ -9,11 +15,11 @@ import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingState } from "@/components/common/loading-state";
 import { ReportForm } from "@/components/reports/form/report-form";
-import { useProjects } from "@/hooks/use-projects";
+import { useApi } from "@/hooks/use-api";
 import { useReportForm, type ReportFormAction } from "@/hooks/use-report-form";
 import { weekRangeOf } from "@/lib/date";
 import type { ReportFormValues } from "@/lib/validators";
-import type { Report } from "@/types";
+import type { Project, Report } from "@/types";
 
 /**
  * Reads the optional `projectId` / `week` query params so other pages can
@@ -26,7 +32,8 @@ function useNewReportInitialValues(): Partial<ReportFormValues> {
     const values: Partial<ReportFormValues> = {};
     const { projectId, week } = router.query;
 
-    if (typeof projectId === "string" && projectId) values.projectId = projectId;
+    if (typeof projectId === "string" && projectId)
+      values.projectId = projectId;
     if (typeof week === "string" && week) {
       const range = weekRangeOf(week);
       values.weekStart = range.start;
@@ -39,7 +46,24 @@ function useNewReportInitialValues(): Partial<ReportFormValues> {
 function NewReportForm() {
   const router = useRouter();
   const initialValues = useNewReportInitialValues();
-  const { projects, isLoading, error, refetch } = useProjects({ status: "ACTIVE" });
+  const { request } = useApi();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setProjects(await request<Project[]>("/api/projects?status=ACTIVE"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load projects.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const controller = useReportForm({
@@ -50,7 +74,9 @@ function NewReportForm() {
           ? "Weekly report submitted for review."
           : "Draft saved. You can finish it any time.",
       );
-      void router.push(action === "SUBMIT" ? `/reports/${report.id}` : "/reports");
+      void router.push(
+        action === "SUBMIT" ? `/reports/${report.id}` : "/reports",
+      );
     },
   });
 
@@ -63,11 +89,16 @@ function NewReportForm() {
   }
 
   if (isLoading) return <LoadingState type="detail" />;
-  if (error) return <ErrorState message={error} onRetry={() => void refetch()} />;
+  if (error)
+    return <ErrorState message={error} onRetry={() => void refetch()} />;
 
   return (
     <>
-      <ReportForm controller={controller} projects={projects} onCancel={handleCancel} />
+      <ReportForm
+        controller={controller}
+        projects={projects}
+        onCancel={handleCancel}
+      />
       <ConfirmDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}
@@ -92,7 +123,10 @@ export default function ReportsNewPage() {
         <PageHeader
           title="Create weekly report"
           description="Record what you delivered, where your time went, and what you plan next week."
-          breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "New report" }]}
+          breadcrumbs={[
+            { label: "Reports", href: "/reports" },
+            { label: "New report" },
+          ]}
         />
         {/* Query params are only available after hydration, so wait before mounting the form. */}
         {router.isReady ? <NewReportForm /> : <LoadingState type="detail" />}

@@ -12,11 +12,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ACTIVITY_PRESENTATION } from "@/config/activity";
-import { useActivity } from "@/hooks/use-activity";
+import { useApi } from "@/hooks/use-api";
 import { relativeTime } from "@/lib/date";
+import type { ActivityItem } from "@/types";
+import { useEffect, useMemo, useState } from "react";
 
 export function NotificationMenu() {
-  const { activity, unreadCount } = useActivity(8);
+  const { request } = useApi();
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  useEffect(() => {
+    let active = true;
+    request<ActivityItem[]>("/api/activity?limit=8")
+      .then((items) => {
+        if (active) setActivity(items);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [request]);
+  const unreadCount = useMemo(
+    () =>
+      activity.filter(
+        (item) =>
+          Date.now() - new Date(item.createdAt).getTime() < 24 * 60 * 60 * 1000,
+      ).length,
+    [activity],
+  );
 
   return (
     <DropdownMenu>
@@ -52,14 +74,18 @@ export function NotificationMenu() {
               return (
                 <DropdownMenuItem key={item.id} asChild className="px-4 py-3">
                   {item.reportId ? (
-                    <Link href={`/reports/${item.reportId}`} className="flex gap-3">
+                    <Link
+                      href={`/reports/${item.reportId}`}
+                      className="flex gap-3"
+                    >
                       <presentation.icon
                         className={`mt-0.5 size-4 shrink-0 ${presentation.iconClass}`}
                         aria-hidden="true"
                       />
                       <span className="min-w-0">
                         <span className="block text-xs leading-snug">
-                          <span className="font-medium">{item.actorName}</span> {item.message}
+                          <span className="font-medium">{item.actorName}</span>{" "}
+                          {item.message}
                         </span>
                         <span className="block text-[11px] text-muted-foreground">
                           {relativeTime(item.createdAt)}
@@ -74,7 +100,8 @@ export function NotificationMenu() {
                       />
                       <span className="min-w-0">
                         <span className="block text-xs leading-snug">
-                          <span className="font-medium">{item.actorName}</span> {item.message}
+                          <span className="font-medium">{item.actorName}</span>{" "}
+                          {item.message}
                         </span>
                         <span className="block text-[11px] text-muted-foreground">
                           {relativeTime(item.createdAt)}

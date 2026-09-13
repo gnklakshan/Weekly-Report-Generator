@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SearchX, UserRoundPlus, Users as UsersIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,32 +10,90 @@ import { LoadingState } from "@/components/common/loading-state";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useUsers } from "@/hooks/use-users";
-import { DEFAULT_PAGE_SIZE, ROLE_LABEL, USER_STATUS_LABEL } from "@/lib/constants";
+import { useApi } from "@/hooks/use-api";
+import {
+  DEFAULT_PAGE_SIZE,
+  ROLE_LABEL,
+  USER_STATUS_LABEL,
+} from "@/lib/constants";
 import { UserFiltersBar } from "./user-filters";
 import { UserFormDialog } from "./user-form-dialog";
 import { UserTable } from "./user-table";
 import { ALL, SELF_ACTION_HINT } from "./user-options";
-import type { User, UserFilters } from "@/types";
+import type {
+  CreateUserInput,
+  Project,
+  UpdateUserInput,
+  User,
+  UserFilters,
+} from "@/types";
 import type { UserFormValues } from "@/lib/validators";
 
 type PendingAction = { kind: "toggleStatus" | "delete"; user: User } | null;
 
 export function UsersManager() {
   const { user: currentUser } = useAuth();
-  const {
-    users,
-    filters,
-    isLoading: isUsersLoading,
-    error: usersError,
-    refetch,
-    setFilters,
-    createUser,
-    updateUser,
-    deleteUser,
-  } = useUsers();
-  const { projects, isLoading: isProjectsLoading, error: projectsError } = useProjects();
+  const { request } = useApi();
+  const [users, setUsers] = useState<User[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filters, setFilters] = useState<UserFilters>({});
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsUsersLoading(true);
+    setUsersError(null);
+    try {
+      const query = new URLSearchParams();
+      if (filters.search) query.set("search", filters.search);
+      if (filters.role) query.set("role", filters.role);
+      if (filters.status) query.set("status", filters.status);
+      const suffix = query.toString() ? `?${query}` : "";
+      setUsers(await request<User[]>(`/api/users${suffix}`));
+    } catch (err) {
+      setUsersError(
+        err instanceof Error ? err.message : "Failed to load users.",
+      );
+    } finally {
+      setIsUsersLoading(false);
+    }
+  }, [filters, request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+  useEffect(() => {
+    request<Project[]>("/api/projects")
+      .then(setProjects)
+      .catch((err) =>
+        setProjectsError(
+          err instanceof Error ? err.message : "Failed to load projects.",
+        ),
+      )
+      .finally(() => setIsProjectsLoading(false));
+  }, [request]);
+  const createUser = async (input: CreateUserInput) => {
+    const created = await request<User>("/api/users", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    setUsers((previous) => [...previous, created]);
+    return created;
+  };
+  const updateUser = async (id: string, input: UpdateUserInput) => {
+    const updated = await request<User>(`/api/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+    setUsers((previous) =>
+      previous.map((entry) => (entry.id === id ? updated : entry)),
+    );
+    return updated;
+  };
+  const deleteUser = async (id: string) => {
+    await request(`/api/users/${id}`, { method: "DELETE" });
+    setUsers((previous) => previous.filter((entry) => entry.id !== id));
+  };
 
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -106,7 +164,8 @@ export function UsersManager() {
         await deleteUser(user.id);
         toast.success(`${user.fullName} was removed from the workspace.`);
       } else {
-        const nextStatus = user.status === "DEACTIVATED" ? "ACTIVE" : "DEACTIVATED";
+        const nextStatus =
+          user.status === "DEACTIVATED" ? "ACTIVE" : "DEACTIVATED";
         await updateUser(user.id, { status: nextStatus });
         toast.success(
           `${user.fullName} is now ${USER_STATUS_LABEL[nextStatus].toLowerCase()}.`,
@@ -114,7 +173,11 @@ export function UsersManager() {
       }
       setPendingAction(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "That change could not be saved.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "That change could not be saved.",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -151,7 +214,9 @@ export function UsersManager() {
         ) : users.length === 0 ? (
           <EmptyState
             icon={isFiltered ? SearchX : UsersIcon}
-            title={isFiltered ? "No people match your filters" : "No accounts yet"}
+            title={
+              isFiltered ? "No people match your filters" : "No accounts yet"
+            }
             description={
               isFiltered
                 ? "Try a different search term, or clear the role and status filters."
@@ -160,7 +225,8 @@ export function UsersManager() {
             actionLabel={isFiltered ? "Clear filters" : "Invite user"}
             onAction={
               isFiltered
-                ? () => updateFilters({ search: undefined, role: ALL, status: ALL })
+                ? () =>
+                    updateFilters({ search: undefined, role: ALL, status: ALL })
                 : openInvite
             }
           />
@@ -172,7 +238,9 @@ export function UsersManager() {
               currentUserId={currentUser?.id}
               isBusy={isBusy}
               onEdit={openEdit}
-              onToggleStatus={(user) => setPendingAction({ kind: "toggleStatus", user })}
+              onToggleStatus={(user) =>
+                setPendingAction({ kind: "toggleStatus", user })
+              }
               onDelete={(user) => setPendingAction({ kind: "delete", user })}
             />
             <DataTablePagination

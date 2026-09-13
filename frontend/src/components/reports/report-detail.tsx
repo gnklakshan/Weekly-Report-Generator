@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
@@ -31,14 +31,15 @@ import { ReportSummary } from "./report-summary";
 import { ReviewTimeline } from "./review-timeline";
 import { SectionCard } from "./section-card";
 import { VersionHistory } from "./version-history";
-import { PlannedTaskTableReadOnly, TaskTableReadOnly } from "./task-table-readonly";
+import {
+  PlannedTaskTableReadOnly,
+  TaskTableReadOnly,
+} from "./task-table-readonly";
 import { ReviewFeedbackCard } from "./form/review-feedback-card";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useReport } from "@/hooks/use-report";
-import { useUsers } from "@/hooks/use-users";
+import { useApi } from "@/hooks/use-api";
 import { canEditReport, canReviewReport } from "@/lib/permissions";
-import type { Report } from "@/types";
+import type { Project, Report, User } from "@/types";
 
 type PendingAction = "SUBMIT" | "DELETE" | null;
 
@@ -108,15 +109,52 @@ function ReportActions({
 export function ReportDetail({ reportId }: { reportId: string }) {
   const router = useRouter();
   const { user, hasPermission } = useAuth();
-  const { report, isLoading, error, refetch, submitReport, deleteReport } = useReport(reportId);
-  const { projects } = useProjects();
-  const { users } = useUsers();
+  const { request } = useApi();
+  const [report, setReport] = useState<Report | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setReport(await request<Report>(`/api/reports/${reportId}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load report.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [reportId, request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+  useEffect(() => {
+    request<Project[]>("/api/projects")
+      .then(setProjects)
+      .catch(() => {});
+    request<User[]>("/api/users")
+      .then(setUsers)
+      .catch(() => {});
+  }, [request]);
+  const submitReport = async () => {
+    const submitted = await request<Report>(`/api/reports/${reportId}/submit`, {
+      method: "POST",
+    });
+    setReport(submitted);
+    return submitted;
+  };
+  const deleteReport = async () => {
+    await request(`/api/reports/${reportId}`, { method: "DELETE" });
+    setReport(null);
+  };
 
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [isBusy, setIsBusy] = useState(false);
 
   if (isLoading) return <LoadingState type="detail" />;
-  if (error) return <ErrorState message={error} onRetry={() => void refetch()} />;
+  if (error)
+    return <ErrorState message={error} onRetry={() => void refetch()} />;
   if (!report) {
     return (
       <ErrorState
@@ -139,9 +177,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
     );
   }
 
-  const author = users.find((candidate) => candidate.id === report.authorId) ?? null;
-  const project = projects.find((candidate) => candidate.id === report.projectId) ?? null;
-  const reviewer = users.find((candidate) => candidate.id === report.reviewedById) ?? null;
+  const author =
+    users.find((candidate) => candidate.id === report.authorId) ?? null;
+  const project =
+    projects.find((candidate) => candidate.id === report.projectId) ?? null;
+  const reviewer =
+    users.find((candidate) => candidate.id === report.reviewedById) ?? null;
 
   async function runPendingAction() {
     if (!pendingAction) return;
@@ -158,7 +199,11 @@ export function ReportDetail({ reportId }: { reportId: string }) {
       }
       setPendingAction(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "That action failed. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "That action failed. Please try again.",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -171,9 +216,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
         description={
           author
             ? `${author.fullName} · ${project?.name ?? "Unassigned project"}`
-            : project?.name ?? "Unassigned project"
+            : (project?.name ?? "Unassigned project")
         }
-        breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "Report detail" }]}
+        breadcrumbs={[
+          { label: "Reports", href: "/reports" },
+          { label: "Report detail" },
+        ]}
         actions={
           <ReportActions
             report={report}
@@ -188,7 +236,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
       <div className="space-y-6">
         <ReviewFeedbackCard report={report} reviewerName={reviewer?.fullName} />
-        <ReportSummary report={report} author={author} project={project} reviewer={reviewer} />
+        <ReportSummary
+          report={report}
+          author={author}
+          project={project}
+          reviewer={reviewer}
+        />
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
@@ -210,9 +263,13 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
             <SectionCard title="Notes" icon={StickyNote}>
               {report.notes.trim() ? (
-                <p className="whitespace-pre-line text-sm text-muted-foreground">{report.notes}</p>
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {report.notes}
+                </p>
               ) : (
-                <p className="text-xs italic text-muted-foreground">No additional notes.</p>
+                <p className="text-xs italic text-muted-foreground">
+                  No additional notes.
+                </p>
               )}
             </SectionCard>
 
@@ -226,12 +283,23 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           </div>
 
           <div className="space-y-6">
-            <SectionCard title="Highlights" icon={Trophy} iconClass="text-emerald-600">
+            <SectionCard
+              title="Highlights"
+              icon={Trophy}
+              iconClass="text-emerald-600"
+            >
               <AchievementList achievements={report.achievements} />
             </SectionCard>
 
-            <SectionCard title="Blockers" icon={AlertTriangle} iconClass="text-amber-600">
-              <BlockerList blockers={report.blockers} resolved={report.status === "APPROVED"} />
+            <SectionCard
+              title="Blockers"
+              icon={AlertTriangle}
+              iconClass="text-amber-600"
+            >
+              <BlockerList
+                blockers={report.blockers}
+                resolved={report.status === "APPROVED"}
+              />
             </SectionCard>
 
             <SectionCard title="Reference links" icon={Link2}>
@@ -247,7 +315,10 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             </SectionCard>
 
             <SectionCard title="Submission versions" icon={History}>
-              <VersionHistory versions={report.versions} currentVersion={report.currentVersion} />
+              <VersionHistory
+                versions={report.versions}
+                currentVersion={report.currentVersion}
+              />
             </SectionCard>
           </div>
         </div>

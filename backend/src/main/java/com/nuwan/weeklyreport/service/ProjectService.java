@@ -91,9 +91,12 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
 
-        if (request.getName() != null) project.setName(request.getName());
-        if (request.getDescription() != null) project.setDescription(request.getDescription());
-        if (request.getStatus() != null) project.setStatus(request.getStatus());
+        if (request.getName() != null)
+            project.setName(request.getName());
+        if (request.getDescription() != null)
+            project.setDescription(request.getDescription());
+        if (request.getStatus() != null)
+            project.setStatus(request.getStatus());
 
         if (request.getMemberIds() != null) {
             for (User oldMember : project.getMembers()) {

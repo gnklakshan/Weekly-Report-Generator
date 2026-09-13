@@ -1,5 +1,4 @@
 import type { ActivityItem, Project, Report, User } from "@/types";
-import { mockProjects } from "@/data/mock-projects";
 import { createMockReports } from "@/data/mock-reports";
 import { createMockActivity } from "@/data/mock-activity";
 import { MOCK_LATENCY_MS, STORAGE_KEY_DB } from "@/lib/constants";
@@ -21,7 +20,7 @@ function seed(): MockDatabase {
   const reports = createMockReports();
   return {
     users: [],
-    projects: mockProjects,
+    projects: [],
     reports,
     activity: createMockActivity(reports, []),
   };

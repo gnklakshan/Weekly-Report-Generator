@@ -1,11 +1,17 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useProjects } from "@/hooks/use-projects";
-import { useUsers } from "@/hooks/use-users";
-import { REPORT_STATUSES_WITH_MISSING, REPORT_STATUS_LABEL } from "@/lib/constants";
+import { useApi } from "@/hooks/use-api";
+import { useEffect, useState } from "react";
+import {
+  REPORT_STATUSES_WITH_MISSING,
+  REPORT_STATUS_LABEL,
+} from "@/lib/constants";
 import { currentWeekRange, weekRangeOf } from "@/lib/date";
-import type { DashboardFilters as DashboardFilterValues, ReportStatusOrMissing } from "@/types";
+import type {
+  DashboardFilters as DashboardFilterValues,
+  ReportStatusOrMissing,
+} from "@/types";
 import { FilterSelect, type FilterOption } from "./filter-select";
 import { WeekStepper } from "./week-stepper";
 
@@ -18,10 +24,30 @@ interface DashboardFiltersProps {
 
 /** Filter bar for the team dashboard: week, date range, member, project, status. */
 export function DashboardFilters({ filters, onChange }: DashboardFiltersProps) {
-  const { users, isLoading: usersLoading } = useUsers({ role: "TEAM_MEMBER" });
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { request } = useApi();
+  const [users, setUsers] = useState<import("@/types").User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [projects, setProjects] = useState<import("@/types").Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
-  const selectedWeek = filters.weekStart ? weekRangeOf(filters.weekStart) : currentWeekRange();
+  useEffect(() => {
+    const query = new URLSearchParams({ role: "TEAM_MEMBER" });
+    request<import("@/types").User[]>(`/api/users?${query}`)
+      .then(setUsers)
+      .catch(() => {})
+      .finally(() => setUsersLoading(false));
+  }, [request]);
+
+  useEffect(() => {
+    request<import("@/types").Project[]>("/api/projects")
+      .then(setProjects)
+      .catch(() => {})
+      .finally(() => setProjectsLoading(false));
+  }, [request]);
+
+  const selectedWeek = filters.weekStart
+    ? weekRangeOf(filters.weekStart)
+    : currentWeekRange();
 
   const memberOptions: FilterOption<string>[] = [
     { value: "ALL", label: "All members" },
@@ -69,7 +95,9 @@ export function DashboardFilters({ filters, onChange }: DashboardFiltersProps) {
                 className="h-9 w-auto text-sm"
                 value={filters.from ?? ""}
                 max={filters.to}
-                onChange={(event) => onChange({ from: event.target.value || undefined })}
+                onChange={(event) =>
+                  onChange({ from: event.target.value || undefined })
+                }
               />
               <span className="text-xs text-muted-foreground">to</span>
               <Label htmlFor="filter-to" className="sr-only">
@@ -81,7 +109,9 @@ export function DashboardFilters({ filters, onChange }: DashboardFiltersProps) {
                 className="h-9 w-auto text-sm"
                 value={filters.to ?? ""}
                 min={filters.from}
-                onChange={(event) => onChange({ to: event.target.value || undefined })}
+                onChange={(event) =>
+                  onChange({ to: event.target.value || undefined })
+                }
               />
             </div>
           </div>

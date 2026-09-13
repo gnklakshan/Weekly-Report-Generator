@@ -1,11 +1,11 @@
 package com.nuwan.weeklyreport.service.transformer;
 
 import com.nuwan.weeklyreport.dao.entity.User;
-import com.nuwan.weeklyreport.dto.response.UserDto;
+import com.nuwan.weeklyreport.dto.response.UserResponseDto;
 
 public class UserTransformer {
-    public static UserDto toUserDto(User user) {
-        UserDto dto = new UserDto();
+    public static UserResponseDto toUserDto(User user) {
+        UserResponseDto dto = new UserResponseDto();
         dto.setId(user.getId());
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());

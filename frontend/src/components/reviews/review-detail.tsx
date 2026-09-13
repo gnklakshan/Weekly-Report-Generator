@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
@@ -24,26 +24,76 @@ import { ReportSummary } from "@/components/reports/report-summary";
 import { ReviewTimeline } from "@/components/reports/review-timeline";
 import { SectionCard } from "@/components/reports/section-card";
 import { VersionHistory } from "@/components/reports/version-history";
-import { PlannedTaskTableReadOnly, TaskTableReadOnly } from "@/components/reports/task-table-readonly";
+import {
+  PlannedTaskTableReadOnly,
+  TaskTableReadOnly,
+} from "@/components/reports/task-table-readonly";
 import { ReviewPanel } from "./review-panel";
 import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
-import { useReport } from "@/hooks/use-report";
-import { useReview } from "@/hooks/use-review";
-import { useUsers } from "@/hooks/use-users";
+import { useApi } from "@/hooks/use-api";
 import { canReviewReport } from "@/lib/permissions";
+import type { Project, Report, User } from "@/types";
 
 export function ReviewDetail({ reportId }: { reportId: string }) {
   const router = useRouter();
   const { user } = useAuth();
-  const { report, isLoading, error, refetch } = useReport(reportId);
-  const { projects } = useProjects();
-  const { users } = useUsers();
-  const { approveReport, requestCorrection } = useReview(user?.id);
+  const { request } = useApi();
+  const [report, setReport] = useState<Report | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setReport(await request<Report>(`/api/reports/${reportId}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load report.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [reportId, request]);
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+  useEffect(() => {
+    request<Project[]>("/api/projects")
+      .then(setProjects)
+      .catch(() => {});
+    request<User[]>("/api/users")
+      .then(setUsers)
+      .catch(() => {});
+  }, [request]);
+  const approveReport = async (input: {
+    reportId: string;
+    reviewerId: string;
+    message?: string;
+  }) => {
+    const updated = await request<Report>(
+      `/api/reviews/${input.reportId}/approve`,
+      { method: "POST", body: JSON.stringify(input) },
+    );
+    setReport(updated);
+    return updated;
+  };
+  const requestCorrection = async (input: {
+    reportId: string;
+    reviewerId: string;
+    message: string;
+  }) => {
+    const updated = await request<Report>(
+      `/api/reviews/${input.reportId}/request-correction`,
+      { method: "POST", body: JSON.stringify(input) },
+    );
+    setReport(updated);
+    return updated;
+  };
   const [isBusy, setIsBusy] = useState(false);
 
   if (isLoading) return <LoadingState type="detail" />;
-  if (error) return <ErrorState message={error} onRetry={() => void refetch()} />;
+  if (error)
+    return <ErrorState message={error} onRetry={() => void refetch()} />;
   if (!report) {
     return (
       <ErrorState
@@ -66,11 +116,18 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
     );
   }
 
-  const author = users.find((candidate) => candidate.id === report.authorId) ?? null;
-  const project = projects.find((candidate) => candidate.id === report.projectId) ?? null;
-  const reviewer = users.find((candidate) => candidate.id === report.reviewedById) ?? null;
+  const author =
+    users.find((candidate) => candidate.id === report.authorId) ?? null;
+  const project =
+    projects.find((candidate) => candidate.id === report.projectId) ?? null;
+  const reviewer =
+    users.find((candidate) => candidate.id === report.reviewedById) ?? null;
 
-  async function handleApprove(input: { reportId: string; reviewerId: string; message?: string }) {
+  async function handleApprove(input: {
+    reportId: string;
+    reviewerId: string;
+    message?: string;
+  }) {
     setIsBusy(true);
     try {
       await approveReport(input);
@@ -99,7 +156,7 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
         description={
           author
             ? `${author.fullName} · ${project?.name ?? "Unassigned project"}`
-            : project?.name ?? "Unassigned project"
+            : (project?.name ?? "Unassigned project")
         }
         breadcrumbs={[
           { label: "Reviews", href: "/reviews" },
@@ -118,7 +175,12 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
       />
 
       <div className="space-y-6">
-        <ReportSummary report={report} author={author} project={project} reviewer={reviewer} />
+        <ReportSummary
+          report={report}
+          author={author}
+          project={project}
+          reviewer={reviewer}
+        />
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
@@ -140,9 +202,13 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
 
             <SectionCard title="Notes" icon={StickyNote}>
               {report.notes.trim() ? (
-                <p className="whitespace-pre-line text-sm text-muted-foreground">{report.notes}</p>
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {report.notes}
+                </p>
               ) : (
-                <p className="text-xs italic text-muted-foreground">No additional notes.</p>
+                <p className="text-xs italic text-muted-foreground">
+                  No additional notes.
+                </p>
               )}
             </SectionCard>
 
@@ -165,11 +231,19 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
               onDone={() => void router.push("/reviews")}
             />
 
-            <SectionCard title="Highlights" icon={Trophy} iconClass="text-emerald-600">
+            <SectionCard
+              title="Highlights"
+              icon={Trophy}
+              iconClass="text-emerald-600"
+            >
               <AchievementList achievements={report.achievements} />
             </SectionCard>
 
-            <SectionCard title="Blockers" icon={AlertTriangle} iconClass="text-amber-600">
+            <SectionCard
+              title="Blockers"
+              icon={AlertTriangle}
+              iconClass="text-amber-600"
+            >
               <BlockerList blockers={report.blockers} resolved={false} />
             </SectionCard>
 
@@ -186,7 +260,10 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
             </SectionCard>
 
             <SectionCard title="Submission versions" icon={History}>
-              <VersionHistory versions={report.versions} currentVersion={report.currentVersion} />
+              <VersionHistory
+                versions={report.versions}
+                currentVersion={report.currentVersion}
+              />
             </SectionCard>
           </div>
         </div>

@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingState } from "@/components/common/loading-state";
@@ -6,9 +12,15 @@ import { EmptyState } from "@/components/common/empty-state";
 import { TasksTrendChart } from "@/components/charts/tasks-trend-chart";
 import { ReportStatusBadge } from "@/components/reports/report-status-badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useDashboard } from "@/hooks/use-dashboard";
+import { useApi } from "@/hooks/use-api";
+import { useCallback, useEffect, useState } from "react";
 import { currentWeekRange, weekRangeOf, formatWeekRange } from "@/lib/date";
-import type { TeamMemberStats, WeekRange } from "@/types";
+import type {
+  DashboardData,
+  DashboardFilters,
+  TeamMemberStats,
+  WeekRange,
+} from "@/types";
 import { MetricsRow } from "./metrics-row";
 import { WeekStepper } from "./week-stepper";
 
@@ -40,7 +52,9 @@ function MyWeekCard({
     <Card className="rounded-xl border bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">My week</CardTitle>
-        <CardDescription className="text-xs">{formatWeekRange(week)}</CardDescription>
+        <CardDescription className="text-xs">
+          {formatWeekRange(week)}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -57,24 +71,41 @@ function MyWeekCard({
         ) : (
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-3 py-2">
-              <span className="text-xs text-muted-foreground">Current week status</span>
+              <span className="text-xs text-muted-foreground">
+                Current week status
+              </span>
               <ReportStatusBadge status={stats.currentWeekStatus} />
             </div>
             <StatRow
               label="Tasks completed"
-              value={weekValue(stats.currentWeekStatus === "NOT_STARTED", `${stats.tasksCompleted}`)}
+              value={weekValue(
+                stats.currentWeekStatus === "NOT_STARTED",
+                `${stats.tasksCompleted}`,
+              )}
             />
             <StatRow
               label="Hours logged"
-              value={weekValue(stats.currentWeekStatus === "NOT_STARTED", `${stats.hours}h`)}
+              value={weekValue(
+                stats.currentWeekStatus === "NOT_STARTED",
+                `${stats.hours}h`,
+              )}
             />
             <StatRow
               label="Open blockers"
-              value={weekValue(stats.currentWeekStatus === "NOT_STARTED", `${stats.openBlockers}`)}
+              value={weekValue(
+                stats.currentWeekStatus === "NOT_STARTED",
+                `${stats.openBlockers}`,
+              )}
             />
-            <StatRow label="Reports submitted" value={`${stats.reportsSubmitted}`} />
+            <StatRow
+              label="Reports submitted"
+              value={`${stats.reportsSubmitted}`}
+            />
             <StatRow label="Approval rate" value={`${stats.approvalRate}%`} />
-            <StatRow label="Avg hours / week" value={`${stats.averageHours}h`} />
+            <StatRow
+              label="Avg hours / week"
+              value={`${stats.averageHours}h`}
+            />
           </div>
         )}
       </CardContent>
@@ -88,13 +119,41 @@ function MyWeekCard({
  */
 export function PersonalSummaryView() {
   const { user } = useAuth();
-  const { data, filters, isLoading, error, refetch, updateFilters } = useDashboard(
-    user ? { memberId: user.id } : undefined,
+  const { request } = useApi();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [filters, setFilters] = useState<DashboardFilters>(
+    user ? { memberId: user.id } : {},
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchDashboard = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const query = new URLSearchParams();
+      if (filters.weekStart) query.set("weekStart", filters.weekStart);
+      if (filters.memberId) query.set("memberId", filters.memberId);
+      const suffix = query.toString() ? `?${query}` : "";
+      setData(await request<DashboardData>(`/api/dashboard${suffix}`));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load dashboard statistics.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters, request]);
+  useEffect(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
 
   if (!user) return null;
 
-  const selectedWeek = filters.weekStart ? weekRangeOf(filters.weekStart) : currentWeekRange();
+  const selectedWeek = filters.weekStart
+    ? weekRangeOf(filters.weekStart)
+    : currentWeekRange();
   const showData = !isLoading && data !== null;
   const myStats = data?.teamStats.find((stat) => stat.memberId === user.id);
 
@@ -106,7 +165,12 @@ export function PersonalSummaryView() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Reporting week
             </span>
-            <WeekStepper week={selectedWeek} onChange={(weekStart) => updateFilters({ weekStart })} />
+            <WeekStepper
+              week={selectedWeek}
+              onChange={(weekStart) =>
+                setFilters((previous) => ({ ...previous, weekStart }))
+              }
+            />
           </div>
           <div className="space-y-1.5 text-right">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -124,13 +188,21 @@ export function PersonalSummaryView() {
       </Card>
 
       {error ? (
-        <ErrorState message={error} onRetry={refetch} />
+        <ErrorState message={error} onRetry={() => void fetchDashboard()} />
       ) : (
         <div className="space-y-6">
-          {showData ? <MetricsRow metrics={data.metrics} /> : <LoadingState type="cards" rows={4} />}
+          {showData ? (
+            <MetricsRow metrics={data.metrics} />
+          ) : (
+            <LoadingState type="cards" rows={4} />
+          )}
           <div className="grid gap-6 lg:grid-cols-2">
             <TasksTrendChart data={data?.trend ?? []} loading={isLoading} />
-            <MyWeekCard stats={myStats} week={selectedWeek} loading={isLoading} />
+            <MyWeekCard
+              stats={myStats}
+              week={selectedWeek}
+              loading={isLoading}
+            />
           </div>
         </div>
       )}

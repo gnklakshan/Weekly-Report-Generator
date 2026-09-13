@@ -1,6 +1,11 @@
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingState } from "@/components/common/loading-state";
-import { useDashboard } from "@/hooks/use-dashboard";
+import { useApi } from "@/hooks/use-api";
+import { useCallback, useEffect, useState } from "react";
+import type {
+  DashboardData,
+  DashboardFilters as DashboardFilterValues,
+} from "@/types";
 import { ActivityFeed } from "./activity-feed";
 import { DashboardCharts } from "./dashboard-charts";
 import { DashboardFilters } from "./dashboard-filters";
@@ -9,7 +14,39 @@ import { TeamStatusTable } from "./team-status-table";
 
 /** Manager/admin view: team-wide metrics, charts, status table and activity. */
 export function TeamDashboard() {
-  const { data, filters, isLoading, error, refetch, updateFilters } = useDashboard();
+  const { request } = useApi();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [filters, setFilters] = useState<DashboardFilterValues>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchDashboard = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const query = new URLSearchParams();
+      if (filters.weekStart) query.set("weekStart", filters.weekStart);
+      if (filters.memberId) query.set("memberId", filters.memberId);
+      if (filters.projectId) query.set("projectId", filters.projectId);
+      if (filters.status) query.set("status", filters.status);
+      if (filters.from) query.set("from", filters.from);
+      if (filters.to) query.set("to", filters.to);
+      const suffix = query.toString() ? `?${query}` : "";
+      setData(await request<DashboardData>(`/api/dashboard${suffix}`));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load dashboard statistics.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters, request]);
+  useEffect(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
+  const updateFilters = (updates: Partial<DashboardFilterValues>) =>
+    setFilters((previous) => ({ ...previous, ...updates }));
   const showData = !isLoading && data !== null;
 
   return (
@@ -17,10 +54,14 @@ export function TeamDashboard() {
       <DashboardFilters filters={filters} onChange={updateFilters} />
 
       {error ? (
-        <ErrorState message={error} onRetry={refetch} />
+        <ErrorState message={error} onRetry={() => void fetchDashboard()} />
       ) : (
         <div className="space-y-6">
-          {showData ? <MetricsRow metrics={data.metrics} /> : <LoadingState type="cards" rows={4} />}
+          {showData ? (
+            <MetricsRow metrics={data.metrics} />
+          ) : (
+            <LoadingState type="cards" rows={4} />
+          )}
 
           <DashboardCharts data={data} loading={isLoading} />
 

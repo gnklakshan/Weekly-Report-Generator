@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Report, UpdateReportInput } from "@/types";
-import { reportsService } from "@/services";
+import type { Report } from "@/types";
+import { useApi } from "@/hooks/use-api";
 
 export function useReport(id: string | undefined) {
+  const { request } = useApi();
   const [report, setReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,38 +13,23 @@ export function useReport(id: string | undefined) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await reportsService.getReport(id);
+      const data = await request<Report>(`/api/reports/${id}`);
       setReport(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load report.";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Failed to load report.");
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, request]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching effect
     void fetchReport();
   }, [fetchReport]);
-
-  const updateReport = async (input: UpdateReportInput) => {
-    if (!id) return null;
-    try {
-      const updated = await reportsService.updateReport(id, input);
-      setReport(updated);
-      return updated;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to update report.";
-      setError(msg);
-      throw err;
-    }
-  };
 
   const submitReport = async () => {
     if (!id) return null;
     try {
-      const submitted = await reportsService.submitReport(id);
+      const submitted = await request<Report>(`/api/reports/${id}/submit`, { method: "POST" });
       setReport(submitted);
       return submitted;
     } catch (err: unknown) {
@@ -56,7 +42,7 @@ export function useReport(id: string | undefined) {
   const deleteReport = async () => {
     if (!id) return;
     try {
-      await reportsService.deleteReport(id);
+      await request(`/api/reports/${id}`, { method: "DELETE" });
       setReport(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete report.";
@@ -70,7 +56,6 @@ export function useReport(id: string | undefined) {
     isLoading,
     error,
     refetch: fetchReport,
-    updateReport,
     submitReport,
     deleteReport,
   };
