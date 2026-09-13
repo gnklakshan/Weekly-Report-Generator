@@ -35,7 +35,7 @@ public class DataInitializer {
                     "admin@example.com", encoded, UserRole.ADMIN, "System Administrator");
 
             User manager = createUser(userRepository, "u_manager", "Sarah Manager",
-                    "manager@example.com", encoded, UserRole.MANAGER, "Project Manager");
+                    "manager@example.com", encoded, UserRole.ADMIN, "Project Manager");
 
             User member1 = createUser(userRepository, "u_member1", "Daniel Perera",
                     "daniel@example.com", encoded, UserRole.TEAM_MEMBER, "Software Engineer");

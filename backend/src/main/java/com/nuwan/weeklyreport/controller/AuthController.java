@@ -33,6 +33,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(request));
     }
 
+//    simple logout endpoint, it will pass logout success message
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));

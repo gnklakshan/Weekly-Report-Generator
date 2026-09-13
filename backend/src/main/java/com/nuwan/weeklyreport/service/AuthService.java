@@ -9,6 +9,7 @@ import com.nuwan.weeklyreport.dto.response.UserDto;
 import com.nuwan.weeklyreport.dao.entity.User;
 import com.nuwan.weeklyreport.enums.UserStatus;
 import com.nuwan.weeklyreport.exception.ApiException;
+import com.nuwan.weeklyreport.service.transformer.UserTransformer;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,7 +50,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
 
         AuthResponse response = new AuthResponse();
-        response.setUser(toDto(user));
+        response.setUser(UserTransformer.toUserDto(user));
         response.setToken(token);
         response.setIssuedAt(LocalDateTime.now().toString());
         return response;
@@ -77,35 +78,24 @@ public class AuthService {
         user.setProjects(new java.util.HashSet<>());
         user.setDirectReports(new ArrayList<>());
 
+        //save to db
         user = userRepository.save(user);
-
+        //generate jwt token
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
 
+        //create response
         AuthResponse response = new AuthResponse();
-        response.setUser(toDto(user));
+        response.setUser(UserTransformer.toUserDto(user));
         response.setToken(token);
         response.setIssuedAt(LocalDateTime.now().toString());
         return response;
     }
 
+    //check the current logged‑in user’s session
     public UserDto getSession(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("Session expired", HttpStatus.UNAUTHORIZED));
-        return toDto(user);
+        return UserTransformer.toUserDto(user);
     }
 
-    private UserDto toDto(User user) {
-        UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setFullName(user.getFullName());
-        dto.setEmail(user.getEmail());
-        dto.setRole(user.getRole());
-        dto.setStatus(user.getStatus());
-        dto.setJobTitle(user.getJobTitle());
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setProjectIds(user.getProjects().stream().map(p -> p.getId()).toList());
-        dto.setManagerId(user.getManager() != null ? user.getManager().getId() : null);
-        dto.setJoinedAt(user.getJoinedAt() != null ? user.getJoinedAt().toString() : null);
-        return dto;
-    }
 }
