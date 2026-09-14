@@ -38,6 +38,7 @@ import {
 import { ReviewFeedbackCard } from "./form/review-feedback-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 import { canEditReport, canReviewReport } from "@/lib/permissions";
 import type { Project, Report, User } from "@/types";
 
@@ -119,7 +120,9 @@ export function ReportDetail({ reportId }: { reportId: string }) {
     setIsLoading(true);
     setError(null);
     try {
-      setReport(await request<Report>(`/api/reports/${reportId}`));
+      setReport(
+        normalizeReport(await request<any>(`/api/reports/${reportId}`)),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load report.");
     } finally {
@@ -138,9 +141,11 @@ export function ReportDetail({ reportId }: { reportId: string }) {
       .catch(() => {});
   }, [request]);
   const submitReport = async () => {
-    const submitted = await request<Report>(`/api/reports/${reportId}/submit`, {
-      method: "POST",
-    });
+    const submitted = normalizeReport(
+      await request<any>(`/api/reports/${reportId}/submit`, {
+        method: "POST",
+      }),
+    );
     setReport(submitted);
     return submitted;
   };

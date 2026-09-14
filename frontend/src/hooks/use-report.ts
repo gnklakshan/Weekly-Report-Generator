@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Report } from "@/types";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 
 export function useReport(id: string | undefined) {
   const { request } = useApi();
@@ -13,8 +14,8 @@ export function useReport(id: string | undefined) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await request<Report>(`/api/reports/${id}`);
-      setReport(data);
+      const raw = await request<any>(`/api/reports/${id}`);
+      setReport(normalizeReport(raw));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load report.");
     } finally {
@@ -29,7 +30,8 @@ export function useReport(id: string | undefined) {
   const submitReport = async () => {
     if (!id) return null;
     try {
-      const submitted = await request<Report>(`/api/reports/${id}/submit`, { method: "POST" });
+      const raw = await request<any>(`/api/reports/${id}/submit`, { method: "POST" });
+      const submitted = normalizeReport(raw);
       setReport(submitted);
       return submitted;
     } catch (err: unknown) {

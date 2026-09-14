@@ -31,6 +31,7 @@ import {
 import { ReviewPanel } from "./review-panel";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 import { canReviewReport } from "@/lib/permissions";
 import type { Project, Report, User } from "@/types";
 
@@ -47,7 +48,9 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
     setIsLoading(true);
     setError(null);
     try {
-      setReport(await request<Report>(`/api/reports/${reportId}`));
+      setReport(
+        normalizeReport(await request<any>(`/api/reports/${reportId}`)),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load report.");
     } finally {
@@ -70,9 +73,11 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
     reviewerId: string;
     message?: string;
   }) => {
-    const updated = await request<Report>(
-      `/api/reviews/${input.reportId}/approve`,
-      { method: "POST", body: JSON.stringify(input) },
+    const updated = normalizeReport(
+      await request<any>(`/api/reviews/approve`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
     );
     setReport(updated);
     return updated;
@@ -82,9 +87,11 @@ export function ReviewDetail({ reportId }: { reportId: string }) {
     reviewerId: string;
     message: string;
   }) => {
-    const updated = await request<Report>(
-      `/api/reviews/${input.reportId}/request-correction`,
-      { method: "POST", body: JSON.stringify(input) },
+    const updated = normalizeReport(
+      await request<any>(`/api/reviews/request-correction`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
     );
     setReport(updated);
     return updated;

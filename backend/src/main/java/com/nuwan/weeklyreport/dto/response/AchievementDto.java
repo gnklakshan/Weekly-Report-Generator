@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class AchievementDto {
     private String id;
     private String description;
-    private Boolean keyAchievement;
+    private Boolean isKeyAchievement;
 }

@@ -8,8 +8,17 @@ import {
   type ReactNode,
 } from "react";
 import { STORAGE_KEY_SESSION } from "@/lib/constants";
-import { hasAnyPermission as checkAny, hasPermission as checkOne } from "@/lib/permissions";
-import type { AuthSession, Credentials, Permission, RegisterInput, User } from "@/types";
+import {
+  hasAnyPermission as checkAny,
+  hasPermission as checkOne,
+} from "@/lib/permissions";
+import type {
+  AuthSession,
+  Credentials,
+  Permission,
+  RegisterInput,
+  User,
+} from "@/types";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -69,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
           method: "GET",
-          headers: { "Authorization": `Bearer ${session.token}` }
+          headers: { Authorization: `Bearer ${session.token}` },
         });
 
         if (!response.ok) {
@@ -149,8 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       try {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {
-          method: "GET",
-          headers: { "Authorization": `Bearer ${token}` }
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
         });
       } catch (e) {
         // ignore network error

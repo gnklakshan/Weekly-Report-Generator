@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { HoursBreakdownCard } from "@/components/reports/hours-breakdown-card";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReports } from "@/lib/api-transform";
 import {
   buildMemberActivity,
   buildMemberProjectSummaries,
@@ -56,15 +57,15 @@ export function TeamMemberProfile({ memberId }: { memberId: string }) {
     setError(null);
     try {
       const reportQuery = new URLSearchParams({ authorId: memberId });
-      const [dashboard, users, projects, memberReports] = await Promise.all([
+      const [dashboard, users, projects, rawReports] = await Promise.all([
         request<DashboardData>("/api/dashboard"),
         request<User[]>("/api/users"),
         request<Project[]>("/api/projects"),
-        request<Report[]>(`/api/reports?${reportQuery}`),
+        request<any[]>(`/api/reports?${reportQuery}`),
       ]);
       setAllUsers(users);
       setAllProjects(projects);
-      setReports(memberReports);
+      setReports(normalizeReports(rawReports));
       setMember(users.find((user) => user.id === memberId) ?? null);
       setStats(
         dashboard.teamStats.find((entry) => entry.memberId === memberId) ??

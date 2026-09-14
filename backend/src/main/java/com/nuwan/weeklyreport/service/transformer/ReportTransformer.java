@@ -39,7 +39,7 @@ public class ReportTransformer {
         blocker.setId(dto.getId() != null ? dto.getId() : UUID.randomUUID().toString());
         blocker.setReport(report);
         blocker.setDescription(dto.getDescription());
-        blocker.setKeyIssue(dto.getKeyIssue() != null ? dto.getKeyIssue() : false);
+        blocker.setKeyIssue(dto.getIsKeyIssue() != null ? dto.getIsKeyIssue() : false);
         return blocker;
     }
 
@@ -48,7 +48,7 @@ public class ReportTransformer {
         achievement.setId(dto.getId() != null ? dto.getId() : UUID.randomUUID().toString());
         achievement.setReport(report);
         achievement.setDescription(dto.getDescription());
-        achievement.setKeyAchievement(dto.getKeyAchievement() != null ? dto.getKeyAchievement() : false);
+        achievement.setKeyAchievement(dto.getIsKeyAchievement() != null ? dto.getIsKeyAchievement() : false);
         return achievement;
     }
 

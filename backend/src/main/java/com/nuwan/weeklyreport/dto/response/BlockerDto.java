@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class BlockerDto {
     private String id;
     private String description;
-    private Boolean keyIssue;
+    private Boolean isKeyIssue;
 }

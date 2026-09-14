@@ -14,6 +14,7 @@ import { ReportStatusBadge } from "@/components/reports/report-status-badge";
 import { ReportForm } from "@/components/reports/form/report-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 import { useReportForm, type ReportFormAction } from "@/hooks/use-report-form";
 import { canEditReport } from "@/lib/permissions";
 import { latestCorrection } from "@/lib/report";
@@ -117,7 +118,9 @@ function ReportEditScreen({ reportId }: { reportId: string }) {
     setIsLoading(true);
     setError(null);
     try {
-      setReport(await request<Report>(`/api/reports/${reportId}`));
+      setReport(
+        normalizeReport(await request<any>(`/api/reports/${reportId}`)),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load report.");
     } finally {

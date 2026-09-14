@@ -6,6 +6,7 @@ import { RequirePermission } from "@/components/layout/require-permission";
 import { ReviewQueue } from "@/components/reviews/review-queue";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 import type { ReviewQueueItem } from "@/types";
 
 export default function ReviewsPage() {
@@ -18,10 +19,16 @@ export default function ReviewsPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const raw = await request<any[]>(
+        user?.id
+          ? `/api/reviews/queue?reviewerId=${user.id}`
+          : "/api/reviews/queue",
+      );
       setQueue(
-        await request<ReviewQueueItem[]>(
-          user?.id ? `/api/reviews?reviewerId=${user.id}` : "/api/reviews",
-        ),
+        raw.map((item) => ({
+          ...item,
+          report: normalizeReport(item.report),
+        })),
       );
     } catch (err) {
       setError(

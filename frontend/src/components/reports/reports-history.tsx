@@ -15,6 +15,7 @@ import { ReportFiltersBar } from "./report-filters";
 import { ReportTable } from "./report-table";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReports } from "@/lib/api-transform";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 import type { Project, Report, ReportFilters, User } from "@/types";
 
@@ -50,7 +51,8 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
       if (filters.from) query.set("from", filters.from);
       if (filters.to) query.set("to", filters.to);
       const suffix = query.toString() ? `?${query}` : "";
-      setReports(await request<Report[]>(`/api/reports${suffix}`));
+      const raw = await request<any[]>(`/api/reports${suffix}`);
+      setReports(normalizeReports(raw));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load reports.");
     } finally {

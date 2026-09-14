@@ -10,15 +10,14 @@ import { createId } from "@/lib/id";
 import { canEditReport } from "@/lib/permissions";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { normalizeReport } from "@/lib/api-transform";
 import type {
   Achievement,
   Blocker,
-  CreateReportInput,
   PlannedTask,
   Report,
   ReportLink,
   ReportTask,
-  UpdateReportInput,
   WeekRange,
 } from "@/types";
 
@@ -101,11 +100,12 @@ export function reportToFormValues(report: Report): ReportFormValues {
 export function formValuesToCreateInput(
   values: ReportFormValues,
   authorId: string,
-): CreateReportInput {
+) {
   return {
     authorId,
     projectId: values.projectId,
-    week: { start: values.weekStart, end: values.weekEnd },
+    weekStart: values.weekStart,
+    weekEnd: values.weekEnd,
     completedTasks: values.completedTasks,
     nextWeekTasks: values.nextWeekTasks,
     blockers: values.blockers,
@@ -116,10 +116,11 @@ export function formValuesToCreateInput(
   };
 }
 
-export function formValuesToUpdateInput(values: ReportFormValues): UpdateReportInput {
+export function formValuesToUpdateInput(values: ReportFormValues) {
   return {
     projectId: values.projectId,
-    week: { start: values.weekStart, end: values.weekEnd },
+    weekStart: values.weekStart,
+    weekEnd: values.weekEnd,
     completedTasks: values.completedTasks,
     nextWeekTasks: values.nextWeekTasks,
     blockers: values.blockers,
@@ -245,19 +246,21 @@ export function useReportForm(options: UseReportFormOptions = {}) {
       setIsSaving(true);
       setSaveError(null);
       try {
-        const saved = report
-          ? await request<Report>(`/api/reports/${report.id}`, {
+        const savedRaw = report
+          ? await request<any>(`/api/reports/${report.id}`, {
               method: "PUT",
               body: JSON.stringify(formValuesToUpdateInput(values))
             })
-          : await request<Report>(`/api/reports`, {
+          : await request<any>(`/api/reports`, {
               method: "POST",
               body: JSON.stringify(formValuesToCreateInput(values, user.id))
             });
-        const finalReport =
+        const saved = normalizeReport(savedRaw);
+        const finalRaw =
           action === "SUBMIT" 
-            ? await request<Report>(`/api/reports/${saved.id}/submit`, { method: "POST" }) 
-            : saved;
+            ? await request<any>(`/api/reports/${saved.id}/submit`, { method: "POST" }) 
+            : savedRaw;
+        const finalReport = normalizeReport(finalRaw);
         form.reset(reportToFormValues(finalReport));
         onSaved?.(finalReport, action);
         return finalReport;
