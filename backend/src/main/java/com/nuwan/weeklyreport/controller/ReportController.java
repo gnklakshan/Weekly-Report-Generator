@@ -1,7 +1,7 @@
 package com.nuwan.weeklyreport.controller;
 
 import com.nuwan.weeklyreport.dto.request.CreateReportRequest;
-import com.nuwan.weeklyreport.dto.response.ReportDto;
+import com.nuwan.weeklyreport.dto.response.ReportResponseDto;
 import com.nuwan.weeklyreport.dto.request.UpdateReportRequest;
 import com.nuwan.weeklyreport.enums.ReportStatus;
 import com.nuwan.weeklyreport.service.ReportService;
@@ -22,8 +22,13 @@ public class ReportController {
         this.reportService = reportService;
     }
 
+    @PostMapping
+    public ResponseEntity<ReportResponseDto> createReport(@Valid @RequestBody CreateReportRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.createReport(request));
+    }
+
     @GetMapping
-    public ResponseEntity<List<ReportDto>> getReports(
+    public ResponseEntity<List<ReportResponseDto>> getReports(
             @RequestParam(required = false) String authorId,
             @RequestParam(required = false) String projectId,
             @RequestParam(required = false) String status,
@@ -40,23 +45,18 @@ public class ReportController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReportDto> getReport(@PathVariable String id) {
+    public ResponseEntity<ReportResponseDto> getReport(@PathVariable String id) {
         return ResponseEntity.ok(reportService.getReport(id));
     }
 
-    @PostMapping
-    public ResponseEntity<ReportDto> createReport(@Valid @RequestBody CreateReportRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.createReport(request));
-    }
-
     @PutMapping("/{id}")
-    public ResponseEntity<ReportDto> updateReport(@PathVariable String id,
-                                                  @RequestBody UpdateReportRequest request) {
+    public ResponseEntity<ReportResponseDto> updateReport(@PathVariable String id,
+                                                          @RequestBody UpdateReportRequest request) {
         return ResponseEntity.ok(reportService.updateReport(id, request));
     }
 
     @PostMapping("/{id}/submit")
-    public ResponseEntity<ReportDto> submitReport(@PathVariable String id) {
+    public ResponseEntity<ReportResponseDto> submitReport(@PathVariable String id) {
         return ResponseEntity.ok(reportService.submitReport(id));
     }
 

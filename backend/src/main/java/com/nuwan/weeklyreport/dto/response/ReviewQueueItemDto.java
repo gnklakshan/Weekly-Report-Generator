@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewQueueItemDto {
-    private ReportDto report;
+    private ReportResponseDto report;
     private String authorName;
     private String projectName;
     private double waitingSinceHours;

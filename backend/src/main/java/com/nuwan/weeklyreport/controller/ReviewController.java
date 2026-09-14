@@ -1,7 +1,7 @@
 package com.nuwan.weeklyreport.controller;
 
 import com.nuwan.weeklyreport.dto.request.ApproveReviewRequest;
-import com.nuwan.weeklyreport.dto.response.ReportDto;
+import com.nuwan.weeklyreport.dto.response.ReportResponseDto;
 import com.nuwan.weeklyreport.dto.request.RequestCorrectionRequest;
 import com.nuwan.weeklyreport.dto.response.ReviewQueueItemDto;
 import com.nuwan.weeklyreport.service.ReviewService;
@@ -28,12 +28,12 @@ public class ReviewController {
     }
 
     @PostMapping("/approve")
-    public ResponseEntity<ReportDto> approveReport(@Valid @RequestBody ApproveReviewRequest request) {
+    public ResponseEntity<ReportResponseDto> approveReport(@Valid @RequestBody ApproveReviewRequest request) {
         return ResponseEntity.ok(reviewService.approveReport(request));
     }
 
     @PostMapping("/request-correction")
-    public ResponseEntity<ReportDto> requestCorrection(
+    public ResponseEntity<ReportResponseDto> requestCorrection(
             @Valid @RequestBody RequestCorrectionRequest request) {
         return ResponseEntity.ok(reviewService.requestCorrection(request));
     }

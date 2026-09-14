@@ -5,7 +5,7 @@ import com.nuwan.weeklyreport.dao.repository.ReportRepository;
 import com.nuwan.weeklyreport.dao.repository.ReviewCommentRepository;
 import com.nuwan.weeklyreport.dao.repository.UserRepository;
 import com.nuwan.weeklyreport.dto.request.ApproveReviewRequest;
-import com.nuwan.weeklyreport.dto.response.ReportDto;
+import com.nuwan.weeklyreport.dto.response.ReportResponseDto;
 import com.nuwan.weeklyreport.dto.request.RequestCorrectionRequest;
 import com.nuwan.weeklyreport.dto.response.ReviewQueueItemDto;
 import com.nuwan.weeklyreport.dao.entity.Activity;
@@ -61,10 +61,10 @@ public class ReviewService {
                                 LocalDate.now().atStartOfDay());
                     }
 
-                    ReportDto reportDto = reportService.getReport(report.getId());
+                    ReportResponseDto reportResponseDto = reportService.getReport(report.getId());
 
                     return new ReviewQueueItemDto(
-                            reportDto,
+                            reportResponseDto,
                             report.getAuthor() != null ? report.getAuthor().getFullName() : "",
                             report.getProject() != null ? report.getProject().getName() : "",
                             hours);
@@ -74,7 +74,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReportDto approveReport(ApproveReviewRequest request) {
+    public ReportResponseDto approveReport(ApproveReviewRequest request) {
         Report report = reportRepository.findById(request.getReportId())
                 .orElseThrow(() -> new ResourceNotFoundException("Report", "id", request.getReportId()));
 
@@ -119,7 +119,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReportDto requestCorrection(RequestCorrectionRequest request) {
+    public ReportResponseDto requestCorrection(RequestCorrectionRequest request) {
         Report report = reportRepository.findById(request.getReportId())
                 .orElseThrow(() -> new ResourceNotFoundException("Report", "id", request.getReportId()));
 

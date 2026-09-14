@@ -12,7 +12,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReportDto {
+public class ReportResponseDto {
     private String id;
     private String authorId;
     private String projectId;
