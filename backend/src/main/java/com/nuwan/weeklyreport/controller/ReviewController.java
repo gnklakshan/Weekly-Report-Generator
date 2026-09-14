@@ -7,12 +7,14 @@ import com.nuwan.weeklyreport.dto.response.ReviewQueueItemDto;
 import com.nuwan.weeklyreport.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
+@PreAuthorize("hasRole('ADMIN')")
 public class ReviewController {
 
     private final ReviewService reviewService;

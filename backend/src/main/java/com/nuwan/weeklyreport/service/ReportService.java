@@ -12,6 +12,9 @@ import com.nuwan.weeklyreport.enums.*;
 import com.nuwan.weeklyreport.exception.ApiException;
 import com.nuwan.weeklyreport.exception.ResourceNotFoundException;
 import com.nuwan.weeklyreport.service.transformer.ReportTransformer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,35 @@ public class ReportService {
         }
 
         return reports.stream().map(ReportTransformer::toDto).collect(Collectors.toList());
+    }
+
+    public PageResponseDto<ReportResponseDto> getReportsPaginated(String authorId, String projectId,
+                                                                   ReportStatus status, String search,
+                                                                   String weekStart, String from, String to,
+                                                                   int page, int size) {
+        LocalDate ws = weekStart != null ? LocalDate.parse(weekStart) : null;
+        LocalDate f = from != null ? LocalDate.parse(from) : null;
+        LocalDate t = to != null ? LocalDate.parse(to) : null;
+        String pid = "ALL".equals(projectId) ? null : projectId;
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Report> reportPage = reportRepository.findFilteredPageable(
+                authorId, pid, status, ws, f, t, pageable);
+
+        List<ReportResponseDto> content = reportPage.getContent().stream()
+                .filter(r -> search == null || search.isBlank() || matchesSearch(r, search.toLowerCase()))
+                .map(ReportTransformer::toDto)
+                .collect(Collectors.toList());
+
+        PageResponseDto<ReportResponseDto> response = new PageResponseDto<>();
+        response.setContent(content);
+        response.setPage(reportPage.getNumber());
+        response.setSize(reportPage.getSize());
+        response.setTotalElements(reportPage.getTotalElements());
+        response.setTotalPages(reportPage.getTotalPages());
+        response.setFirst(reportPage.isFirst());
+        response.setLast(reportPage.isLast());
+        return response;
     }
 
     public ReportResponseDto getReport(String id) {

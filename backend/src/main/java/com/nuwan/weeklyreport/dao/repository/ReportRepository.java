@@ -2,6 +2,8 @@ package com.nuwan.weeklyreport.dao.repository;
 
 import com.nuwan.weeklyreport.dao.entity.Report;
 import com.nuwan.weeklyreport.enums.ReportStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,6 +36,23 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             @Param("weekStart") LocalDate weekStart,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
+
+    @Query("SELECT r FROM Report r WHERE " +
+           "(:authorId IS NULL OR r.author.id = :authorId) AND " +
+           "(:projectId IS NULL OR r.project.id = :projectId) AND " +
+           "(:status IS NULL OR r.status = :status) AND " +
+           "(:weekStart IS NULL OR r.weekStart = :weekStart) AND " +
+           "(:from IS NULL OR r.weekStart >= :from) AND " +
+           "(:to IS NULL OR r.weekEnd <= :to) " +
+           "ORDER BY r.weekStart DESC")
+    Page<Report> findFilteredPageable(
+            @Param("authorId") String authorId,
+            @Param("projectId") String projectId,
+            @Param("status") ReportStatus status,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            Pageable pageable);
 
     @Query("SELECT r FROM Report r WHERE r.status = :status ORDER BY r.submittedAt ASC")
     List<Report> findSubmittedReports(@Param("status") ReportStatus status);

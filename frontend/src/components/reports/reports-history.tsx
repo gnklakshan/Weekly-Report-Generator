@@ -33,12 +33,17 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<ReportFilters>({
     search: initialSearch,
     authorId: canViewTeam ? undefined : user?.id,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const refetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -50,15 +55,26 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
       if (filters.authorId) query.set("authorId", filters.authorId);
       if (filters.from) query.set("from", filters.from);
       if (filters.to) query.set("to", filters.to);
+      // Server-side pagination
+      query.set("page", String(page - 1)); // backend is 0-indexed
+      query.set("size", String(DEFAULT_PAGE_SIZE));
       const suffix = query.toString() ? `?${query}` : "";
-      const raw = await request<any[]>(`/api/reports${suffix}`);
-      setReports(normalizeReports(raw));
+      const raw = await request<any>(`/api/reports${suffix}`);
+      // Handle paginated response shape
+      if (raw && Array.isArray(raw.content)) {
+        setReports(normalizeReports(raw.content));
+        setTotalItems(raw.totalElements ?? 0);
+      } else if (Array.isArray(raw)) {
+        // Fallback: non-paginated list
+        setReports(normalizeReports(raw));
+        setTotalItems(raw.length);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load reports.");
     } finally {
       setIsLoading(false);
     }
-  }, [filters, request]);
+  }, [filters, page, request]);
   useEffect(() => {
     void refetch();
   }, [refetch]);
@@ -75,11 +91,8 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
   const deleteReport = async (id: string) => {
     await request(`/api/reports/${id}`, { method: "DELETE" });
     setReports((previous) => previous.filter((report) => report.id !== id));
+    setTotalItems((prev) => Math.max(0, prev - 1));
   };
-
-  const [page, setPage] = useState(1);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   function handleFilterChange(updates: Partial<ReportFilters>) {
     setFilters((previous) => ({ ...previous, ...updates }));
@@ -99,13 +112,6 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
       setIsDeleting(false);
     }
   }
-
-  const pageCount = Math.max(1, Math.ceil(reports.length / DEFAULT_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const visible = reports.slice(
-    (currentPage - 1) * DEFAULT_PAGE_SIZE,
-    currentPage * DEFAULT_PAGE_SIZE,
-  );
 
   const hasActiveFilters = Boolean(
     filters.search ||
@@ -189,16 +195,16 @@ function ReportsHistoryView({ initialSearch }: { initialSearch?: string }) {
         ) : (
           <>
             <ReportTable
-              reports={visible}
+              reports={reports}
               projects={projects}
               users={users}
               currentUserId={user?.id}
               onDelete={(id) => setPendingDelete(id)}
             />
             <DataTablePagination
-              page={currentPage}
+              page={page}
               pageSize={DEFAULT_PAGE_SIZE}
-              totalItems={reports.length}
+              totalItems={totalItems}
               onPageChange={setPage}
               itemLabel="reports"
             />
