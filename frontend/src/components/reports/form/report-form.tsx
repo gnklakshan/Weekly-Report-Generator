@@ -70,7 +70,7 @@ export function ReportForm({ controller, projects, report, reviewerName, onCance
   return (
     <Form {...form}>
       {/* The wizard drives saves from explicit buttons, so the form itself never submits. */}
-      <form className="space-y-8 pb-16" noValidate onSubmit={(event) => event.preventDefault()}>
+      <form className="space-y-5 pb-16" noValidate onSubmit={(event) => event.preventDefault()}>
         {report ? <ReviewFeedbackCard report={report} reviewerName={reviewerName} /> : null}
 
         <ReportHeaderSection
@@ -94,14 +94,14 @@ export function ReportForm({ controller, projects, report, reviewerName, onCance
         {step === 1 ? <TaskTable /> : null}
 
         {step === 2 ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <HoursBreakdownSection />
             <NotesSection />
           </div>
         ) : null}
 
         {step === 3 ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <AchievementsSection />
             <BlockersSection />
             <LinksSection />
@@ -109,7 +109,7 @@ export function ReportForm({ controller, projects, report, reviewerName, onCance
         ) : null}
 
         {step === 4 ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <NextWeekTasksSection />
             <SubmissionSummary
               projectName={projectName}

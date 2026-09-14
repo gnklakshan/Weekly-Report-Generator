@@ -43,16 +43,28 @@ export function TeamStatusTable({ stats }: TeamStatusTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <Table aria-label="Team member status for the selected week">
         <TableHeader>
-          <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead className="text-xs font-semibold">Team Member</TableHead>
-            <TableHead className="text-xs font-semibold">Reports</TableHead>
-            <TableHead className="text-xs font-semibold">Current Week</TableHead>
-            <TableHead className="text-xs font-semibold">Tasks Completed</TableHead>
-            <TableHead className="text-xs font-semibold">Hours</TableHead>
-            <TableHead className="text-xs font-semibold">Open Blockers</TableHead>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              Team Member
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              Reports
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              Status
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+              Tasks
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+              Hours
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+              Blockers
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -62,7 +74,7 @@ export function TeamStatusTable({ stats }: TeamStatusTableProps) {
               <TableRow
                 key={stat.memberId}
                 tabIndex={0}
-                className="cursor-pointer transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
+                className="cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
                 onClick={() => open(stat.memberId)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -79,27 +91,31 @@ export function TeamStatusTable({ stats }: TeamStatusTableProps) {
                     className="size-8"
                   />
                 </TableCell>
-                <TableCell className="text-xs tabular-nums text-muted-foreground">
+                <TableCell className="text-sm tabular-nums text-foreground">
                   {stat.reportsSubmitted}
                 </TableCell>
                 <TableCell>
                   <ReportStatusBadge status={stat.currentWeekStatus} />
                 </TableCell>
-                <TableCell className="text-xs tabular-nums text-muted-foreground">
+                <TableCell className="text-sm tabular-nums text-foreground text-right">
                   {notStarted ? EM_DASH : stat.tasksCompleted}
                 </TableCell>
-                <TableCell className="text-xs tabular-nums text-muted-foreground">
+                <TableCell className="text-sm tabular-nums text-foreground text-right">
                   {notStarted ? EM_DASH : `${stat.hours}h`}
                 </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-sm text-right">
                   {notStarted ? (
-                    <span className="tabular-nums text-muted-foreground">{EM_DASH}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {EM_DASH}
+                    </span>
                   ) : stat.openBlockers > 0 ? (
-                    <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium tabular-nums text-destructive">
+                    <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium tabular-nums text-rose-700 dark:bg-rose-950 dark:text-rose-300">
                       {stat.openBlockers}
                     </span>
                   ) : (
-                    <span className="tabular-nums text-muted-foreground">0</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      0
+                    </span>
                   )}
                 </TableCell>
               </TableRow>

@@ -50,13 +50,13 @@ export function TeamDashboard() {
   const showData = !isLoading && data !== null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <DashboardFilters filters={filters} onChange={updateFilters} />
 
       {error ? (
         <ErrorState message={error} onRetry={() => void fetchDashboard()} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {showData ? (
             <MetricsRow metrics={data.metrics} />
           ) : (
@@ -65,10 +65,10 @@ export function TeamDashboard() {
 
           <DashboardCharts data={data} loading={isLoading} />
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             <section className="space-y-3 lg:col-span-2">
               <div className="flex items-baseline justify-between gap-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h2 className="text-sm font-medium text-foreground">
                   Team status this week
                 </h2>
                 {showData ? (

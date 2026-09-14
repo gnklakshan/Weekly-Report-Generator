@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface SectionCardProps {
   title: string;
@@ -22,14 +28,27 @@ export function SectionCard({
   children,
 }: SectionCardProps) {
   return (
-    <Card>
-      <CardHeader className={action ? "flex flex-row items-start justify-between gap-3 pb-4" : "pb-4"}>
+    <Card className="rounded-lg border">
+      <CardHeader
+        className={
+          action
+            ? "flex flex-row items-start justify-between gap-3 pb-4"
+            : "pb-4"
+        }
+      >
         <div className="min-w-0">
-          <CardTitle className="flex items-center gap-2 text-base">
-            {Icon ? <Icon className={`size-4 ${iconClass ?? ""}`} aria-hidden="true" /> : null}
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            {Icon ? (
+              <Icon
+                className={`size-4 ${iconClass ?? ""}`}
+                aria-hidden="true"
+              />
+            ) : null}
             {title}
           </CardTitle>
-          {description ? <CardDescription>{description}</CardDescription> : null}
+          {description ? (
+            <CardDescription className="mt-1">{description}</CardDescription>
+          ) : null}
         </div>
         {action}
       </CardHeader>
@@ -41,7 +60,7 @@ export function SectionCard({
 /** Placeholder shown inside a section that has no rows yet. */
 export function SectionEmptyHint({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed py-8 text-center text-xs text-muted-foreground">
+    <p className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
       {children}
     </p>
   );

@@ -16,24 +16,28 @@ export function WeekStepper({ week, onChange }: WeekStepperProps) {
   const isCurrent = week.start === current.start;
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <Button
         variant="outline"
         size="icon"
-        className="size-9"
+        className="size-8"
         aria-label="Previous week"
         onClick={() => onChange(shiftWeek(week, -1).start)}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </Button>
-      <div className="min-w-[8.5rem] px-1 text-center">
-        <div className="text-sm font-medium tabular-nums">{formatWeekRange(week)}</div>
-        <div className="text-xs text-muted-foreground">{isCurrent ? "Current week" : "Selected week"}</div>
+      <div className="min-w-[9rem] px-1 text-center">
+        <div className="text-sm font-medium tabular-nums">
+          {formatWeekRange(week)}
+        </div>
+        {!isCurrent && (
+          <div className="text-xs text-muted-foreground">Selected week</div>
+        )}
       </div>
       <Button
         variant="outline"
         size="icon"
-        className="size-9"
+        className="size-8"
         aria-label="Next week"
         onClick={() => onChange(shiftWeek(week, 1).start)}
       >
@@ -42,11 +46,11 @@ export function WeekStepper({ week, onChange }: WeekStepperProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="ml-1"
+        className="ml-1 h-8 text-xs"
         onClick={() => onChange(current.start)}
         disabled={isCurrent}
       >
-        This week
+        Today
       </Button>
     </div>
   );

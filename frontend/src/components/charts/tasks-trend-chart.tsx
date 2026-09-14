@@ -1,7 +1,11 @@
-import { useId } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts";
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import type { TrendPoint } from "@/types";
 import { ChartCard } from "./chart-card";
 
@@ -14,20 +18,24 @@ interface TasksTrendChartProps {
 const config: ChartConfig = {
   tasksCompleted: {
     label: "Tasks completed",
-    color: "var(--color-chart-1)",
+    color: "var(--color-chart-2)",
   },
 };
 
-/** Area chart of completed tasks per reporting week. */
-export function TasksTrendChart({ data, loading = false, className }: TasksTrendChartProps) {
-  const gradientId = `trend-fill-${useId().replace(/:/g, "")}`;
+/** Compact bar chart of completed tasks per reporting week. */
+export function TasksTrendChart({
+  data,
+  loading = false,
+  className,
+}: TasksTrendChartProps) {
   const total = data.reduce((sum, point) => sum + point.tasksCompleted, 0);
+  const max = Math.max(...data.map((p) => p.tasksCompleted), 1);
   const isEmpty = !loading && data.length === 0;
 
   return (
     <ChartCard
       title="Tasks completed"
-      description="Completed tasks per reporting week"
+      description={`${total} total across ${data.length} weeks`}
       loading={loading}
       isEmpty={isEmpty}
       className={className}
@@ -35,42 +43,52 @@ export function TasksTrendChart({ data, loading = false, className }: TasksTrend
       <ChartContainer
         config={config}
         role="img"
-        aria-label={`Area chart of tasks completed per week across ${data.length} weeks, ${total} tasks in total.`}
+        aria-label={`Bar chart of tasks completed per week, ${total} tasks in total.`}
       >
-        <AreaChart data={data} accessibilityLayer margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--color-tasksCompleted)" stopOpacity={0.7} />
-              <stop offset="95%" stopColor="var(--color-tasksCompleted)" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <BarChart
+          data={data}
+          accessibilityLayer
+          margin={{ top: 16, right: 4, left: 4, bottom: 0 }}
+          barCategoryGap="20%"
+        >
           <XAxis
             dataKey="weekLabel"
             tickLine={false}
             axisLine={false}
-            tickMargin={8}
-            tick={{ fontSize: 12 }}
+            tickMargin={6}
+            tick={{ fontSize: 11 }}
+            interval={0}
+            angle={-30}
+            textAnchor="end"
+            height={50}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={32}
+            width={28}
             allowDecimals={false}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 11 }}
           />
           <ChartTooltip
             cursor={false}
-            content={<ChartTooltipContent labelFormatter={(value) => `Week of ${String(value)}`} />}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(value) => `Week of ${String(value)}`}
+              />
+            }
           />
-          <Area
-            dataKey="tasksCompleted"
-            type="monotone"
-            fill={`url(#${gradientId})`}
-            stroke="var(--color-tasksCompleted)"
-            strokeWidth={2}
-          />
-        </AreaChart>
+          <Bar dataKey="tasksCompleted" radius={[4, 4, 0, 0]} barSize={32}>
+            {data.map((point) => (
+              <Cell
+                key={point.weekStart}
+                fill="var(--color-tasksCompleted)"
+                opacity={
+                  point.tasksCompleted === max && data.length > 1 ? 1 : 0.65
+                }
+              />
+            ))}
+          </Bar>
+        </BarChart>
       </ChartContainer>
     </ChartCard>
   );

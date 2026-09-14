@@ -1,7 +1,13 @@
 import { CheckCircle2 } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { ReportFormValues } from "@/lib/validators";
 
 interface SubmissionSummaryProps {
@@ -11,7 +17,11 @@ interface SubmissionSummaryProps {
 }
 
 /** Read-only recap shown on the final step before submitting. */
-export function SubmissionSummary({ projectName, weekLabel, totalLoggedHours }: SubmissionSummaryProps) {
+export function SubmissionSummary({
+  projectName,
+  weekLabel,
+  totalLoggedHours,
+}: SubmissionSummaryProps) {
   const { watch } = useFormContext<ReportFormValues>();
   const tasks = watch("completedTasks") ?? [];
   const achievements = watch("achievements") ?? [];
@@ -21,17 +31,17 @@ export function SubmissionSummary({ projectName, weekLabel, totalLoggedHours }: 
     { label: "Project", value: projectName ?? "Not selected" },
     { label: "Week", value: weekLabel },
     { label: "Tasks", value: `${tasks.length} recorded` },
-    { label: "Hours", value: `${totalLoggedHours} h` },
+    { label: "Hours", value: `${totalLoggedHours}h` },
   ];
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base text-primary">
-          <CheckCircle2 className="size-5" aria-hidden="true" />
+    <Card className="rounded-lg border border-primary/20 bg-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-primary">
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           Ready to submit
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs">
           Review the summary before sending this report to your manager.
         </CardDescription>
       </CardHeader>
@@ -40,21 +50,25 @@ export function SubmissionSummary({ projectName, weekLabel, totalLoggedHours }: 
           {facts.map((fact) => (
             <div key={fact.label}>
               <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-              <dd className="truncate font-semibold">{fact.value}</dd>
+              <dd className="truncate font-medium">{fact.value}</dd>
             </div>
           ))}
         </dl>
 
         {achievements.length > 0 ? (
           <div className="rounded-lg bg-card p-4">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
               Highlights
             </p>
-            <ul className="list-inside list-disc space-y-1 text-xs">
+            <ul className="list-inside list-disc space-y-1 text-sm">
               {achievements.map((achievement) => (
                 <li
                   key={achievement.id}
-                  className={achievement.isKeyAchievement ? "font-semibold text-primary" : undefined}
+                  className={
+                    achievement.isKeyAchievement
+                      ? "font-medium text-primary"
+                      : undefined
+                  }
                 >
                   {achievement.description || "Untitled highlight"}
                   {achievement.isKeyAchievement ? " (key achievement)" : ""}
@@ -66,12 +80,19 @@ export function SubmissionSummary({ projectName, weekLabel, totalLoggedHours }: 
 
         {blockers.length > 0 ? (
           <div className="rounded-lg bg-card p-4">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
               Blockers raised
             </p>
-            <ul className="list-inside list-disc space-y-1 text-xs">
+            <ul className="list-inside list-disc space-y-1 text-sm">
               {blockers.map((blocker) => (
-                <li key={blocker.id} className={blocker.isKeyIssue ? "font-semibold text-rose-600" : undefined}>
+                <li
+                  key={blocker.id}
+                  className={
+                    blocker.isKeyIssue
+                      ? "font-medium text-rose-600 dark:text-rose-400"
+                      : undefined
+                  }
+                >
                   {blocker.description || "Untitled blocker"}
                   {blocker.isKeyIssue ? " (key issue)" : ""}
                 </li>

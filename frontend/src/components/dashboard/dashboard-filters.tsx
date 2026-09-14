@@ -71,42 +71,46 @@ export function DashboardFilters({ filters, onChange }: DashboardFiltersProps) {
   }
 
   return (
-    <Card className="rounded-xl border bg-card">
-      <CardContent className="grid gap-5 p-4">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+    <Card className="rounded-lg border bg-card">
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               Reporting week
             </span>
             <WeekStepper week={selectedWeek} onChange={handleWeekChange} />
           </div>
 
-          <div className="space-y-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Custom date range
-            </span>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="filter-from" className="sr-only">
-                From date
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="filter-from"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                From
               </Label>
               <Input
                 id="filter-from"
                 type="date"
-                className="h-9 w-auto text-sm"
+                className="h-9 w-[140px] text-sm"
                 value={filters.from ?? ""}
                 max={filters.to}
                 onChange={(event) =>
                   onChange({ from: event.target.value || undefined })
                 }
               />
-              <span className="text-xs text-muted-foreground">to</span>
-              <Label htmlFor="filter-to" className="sr-only">
-                To date
+            </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="filter-to"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                To
               </Label>
               <Input
                 id="filter-to"
                 type="date"
-                className="h-9 w-auto text-sm"
+                className="h-9 w-[140px] text-sm"
                 value={filters.to ?? ""}
                 min={filters.from}
                 onChange={(event) =>
@@ -117,7 +121,7 @@ export function DashboardFilters({ filters, onChange }: DashboardFiltersProps) {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:mt-4">
           <FilterSelect
             id="filter-member"
             label="Team member"

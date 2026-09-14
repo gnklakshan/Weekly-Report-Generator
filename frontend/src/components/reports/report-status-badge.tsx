@@ -1,22 +1,31 @@
 import { Badge } from "@/components/ui/badge";
 import type { ReportStatusOrMissing } from "@/types";
 import { REPORT_STATUS_LABEL } from "@/lib/constants";
-import { AlertCircle, CheckCircle2, Clock, Edit3, MinusCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Edit3,
+  MinusCircle,
+} from "lucide-react";
 
 interface ReportStatusBadgeProps {
   status: ReportStatusOrMissing;
   className?: string;
 }
 
-export function ReportStatusBadge({ status, className }: ReportStatusBadgeProps) {
+export function ReportStatusBadge({
+  status,
+  className,
+}: ReportStatusBadgeProps) {
   switch (status) {
     case "DRAFT":
       return (
         <Badge
           variant="outline"
-          className={`gap-1 bg-slate-50 text-slate-700 border-slate-300 dark:bg-slate-900 dark:text-slate-300 ${className ?? ""}`}
+          className={`gap-1.5 bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700 ${className ?? ""}`}
         >
-          <Edit3 className="size-3 text-slate-500" />
+          <Edit3 className="size-3" />
           {REPORT_STATUS_LABEL[status]}
         </Badge>
       );
@@ -24,9 +33,9 @@ export function ReportStatusBadge({ status, className }: ReportStatusBadgeProps)
       return (
         <Badge
           variant="outline"
-          className={`gap-1 bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 ${className ?? ""}`}
+          className={`gap-1.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800 ${className ?? ""}`}
         >
-          <Clock className="size-3 text-amber-600" />
+          <Clock className="size-3" />
           {REPORT_STATUS_LABEL[status]}
         </Badge>
       );
@@ -34,9 +43,9 @@ export function ReportStatusBadge({ status, className }: ReportStatusBadgeProps)
       return (
         <Badge
           variant="outline"
-          className={`gap-1 bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950 dark:text-rose-300 ${className ?? ""}`}
+          className={`gap-1.5 bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800 ${className ?? ""}`}
         >
-          <AlertCircle className="size-3 text-rose-600" />
+          <AlertCircle className="size-3" />
           {REPORT_STATUS_LABEL[status]}
         </Badge>
       );
@@ -44,9 +53,9 @@ export function ReportStatusBadge({ status, className }: ReportStatusBadgeProps)
       return (
         <Badge
           variant="outline"
-          className={`gap-1 bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 ${className ?? ""}`}
+          className={`gap-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 ${className ?? ""}`}
         >
-          <CheckCircle2 className="size-3 text-emerald-600" />
+          <CheckCircle2 className="size-3" />
           {REPORT_STATUS_LABEL[status]}
         </Badge>
       );
@@ -54,9 +63,9 @@ export function ReportStatusBadge({ status, className }: ReportStatusBadgeProps)
       return (
         <Badge
           variant="outline"
-          className={`gap-1 bg-zinc-100 text-zinc-600 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 ${className ?? ""}`}
+          className={`gap-1.5 bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 ${className ?? ""}`}
         >
-          <MinusCircle className="size-3 text-zinc-400" />
+          <MinusCircle className="size-3" />
           {REPORT_STATUS_LABEL[status]}
         </Badge>
       );

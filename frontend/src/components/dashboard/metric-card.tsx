@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +18,18 @@ interface MetricCardProps {
   loading?: boolean;
 }
 
-const TONE_CLASS: Record<MetricTone, string> = {
-  default: "bg-muted text-muted-foreground",
-  positive: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
-  warning: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
-  destructive: "bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400",
+const TONE_BORDER: Record<MetricTone, string> = {
+  default: "border-l-border",
+  positive: "border-l-emerald-500",
+  warning: "border-l-amber-500",
+  destructive: "border-l-rose-500",
+};
+
+const TONE_ICON: Record<MetricTone, string> = {
+  default: "text-muted-foreground",
+  positive: "text-emerald-600 dark:text-emerald-400",
+  warning: "text-amber-600 dark:text-amber-400",
+  destructive: "text-rose-600 dark:text-rose-400",
 };
 
 /** Single KPI tile. Value and hint are always supplied by the caller from derived data. */
@@ -36,26 +43,41 @@ export function MetricCard({
   loading = false,
 }: MetricCardProps) {
   return (
-    <Card className="rounded-xl border bg-card">
-      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </CardTitle>
-        <span
-          className={cn("flex size-8 shrink-0 items-center justify-center rounded-md", TONE_CLASS[tone])}
-          aria-hidden="true"
-        >
-          <Icon className="size-4" />
-        </span>
-      </CardHeader>
-      <CardContent>
+    <Card
+      className={cn(
+        "rounded-lg border border-l-[3px] bg-card",
+        TONE_BORDER[tone],
+      )}
+    >
+      <CardContent className="p-5">
         {loading ? (
-          <Skeleton className="h-8 w-24" />
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-3 w-32" />
+          </div>
         ) : (
           <>
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">{value}</div>
-            {delta ? <p className="mt-1 text-xs font-medium text-muted-foreground">{delta}</p> : null}
-            {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+            <div className="flex items-center gap-2 mb-3">
+              <Icon
+                className={cn("size-4", TONE_ICON[tone])}
+                aria-hidden="true"
+              />
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {label}
+              </span>
+            </div>
+            <div className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+              {value}
+            </div>
+            {delta ? (
+              <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                {delta}
+              </p>
+            ) : null}
+            {hint ? (
+              <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+            ) : null}
           </>
         )}
       </CardContent>

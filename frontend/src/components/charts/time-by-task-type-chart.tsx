@@ -1,11 +1,3 @@
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
-
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
 import type { TaskTypeSlice } from "@/types";
 import { ChartCard } from "./chart-card";
 
@@ -15,63 +7,60 @@ interface TimeByTaskTypeChartProps {
   className?: string;
 }
 
-const CHART_TOKENS = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
+const BAR_COLORS = [
+  "bg-[var(--color-chart-1)]",
+  "bg-[var(--color-chart-2)]",
+  "bg-[var(--color-chart-3)]",
+  "bg-[var(--color-chart-4)]",
+  "bg-[var(--color-chart-5)]",
+];
 
-/** Horizontal bar of logged hours per task type, one chart colour token each. */
-export function TimeByTaskTypeChart({ data, loading = false, className }: TimeByTaskTypeChartProps) {
-  const isEmpty = !loading && data.every((slice) => slice.hours === 0);
-
-  const config: ChartConfig = data.reduce<ChartConfig>((acc, slice, index) => {
-    acc[slice.taskType] = {
-      label: slice.label,
-      color: `var(--color-${CHART_TOKENS[index % CHART_TOKENS.length]})`,
-    };
-    return acc;
-  }, { hours: { label: "Hours logged" } });
+/** Compact list view of logged hours per task type with inline progress bars. */
+export function TimeByTaskTypeChart({
+  data,
+  loading = false,
+  className,
+}: TimeByTaskTypeChartProps) {
+  const totalHours = data.reduce((sum, slice) => sum + slice.hours, 0);
+  const maxHours = Math.max(...data.map((s) => s.hours), 1);
+  const isEmpty = !loading && totalHours === 0;
 
   return (
     <ChartCard
       title="Time by task type"
-      description="Logged hours grouped by activity type"
+      description={`${totalHours}h total logged`}
       loading={loading}
       isEmpty={isEmpty}
       className={className}
     >
-      <ChartContainer
-        config={config}
-        role="img"
-        aria-label={`Bar chart of logged hours by task type across ${data.length} categories.`}
-      >
-        <BarChart
-          data={data}
-          layout="vertical"
-          accessibilityLayer
-          margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
-        >
-          <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-          <XAxis
-            type="number"
-            tickLine={false}
-            axisLine={false}
-            allowDecimals={false}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            type="category"
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            width={96}
-            tick={{ fontSize: 12 }}
-          />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-          <Bar dataKey="hours" name="hours" radius={[0, 4, 4, 0]} barSize={20}>
-            {data.map((slice) => (
-              <Cell key={slice.taskType} fill={`var(--color-${slice.taskType})`} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ChartContainer>
+      <ul className="space-y-3 py-1">
+        {data.map((slice, index) => {
+          const pct =
+            totalHours > 0 ? Math.round((slice.hours / totalHours) * 100) : 0;
+          const barWidth = maxHours > 0 ? (slice.hours / maxHours) * 100 : 0;
+          const colorClass = BAR_COLORS[index % BAR_COLORS.length];
+
+          return (
+            <li key={slice.taskType} className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm text-foreground">{slice.label}</span>
+                <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                  {slice.hours}h
+                  <span className="ml-1.5 text-xs text-muted-foreground/70">
+                    {pct}%
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted">
+                <div
+                  className={`h-2 rounded-full transition-all ${colorClass}`}
+                  style={{ width: `${barWidth}%` }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </ChartCard>
   );
 }

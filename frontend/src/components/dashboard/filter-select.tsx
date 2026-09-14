@@ -35,19 +35,24 @@ export function FilterSelect<T extends string>({
 }: FilterSelectProps<T>) {
   return (
     <div className="space-y-1.5">
-      <Label
-        htmlFor={id}
-        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-      >
+      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
-      <Select value={value} onValueChange={(next) => onChange(next as T)} disabled={disabled}>
+      <Select
+        value={value}
+        onValueChange={(next) => onChange(next as T)}
+        disabled={disabled}
+      >
         <SelectTrigger id={id} className="h-9 w-full text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value} className="text-sm">
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="text-sm"
+            >
               {option.label}
             </SelectItem>
           ))}

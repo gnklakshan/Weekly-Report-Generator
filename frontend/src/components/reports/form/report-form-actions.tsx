@@ -27,37 +27,61 @@ export function ReportFormActions({
   const isLastStep = step === STEP_IDS[STEP_IDS.length - 1];
 
   return (
-    <div className="space-y-3 pt-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button type="button" variant="outline" disabled={isFirstStep || isSaving} onClick={onPreviousStep}>
-          <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-          Previous
+    <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isFirstStep || isSaving}
+          onClick={onPreviousStep}
+        >
+          <ArrowLeft className="mr-1.5 size-4" aria-hidden="true" />
+          Back
         </Button>
 
         {isLastStep ? (
-          <Button type="button" disabled={isSaving} onClick={onSubmit}>
-            <Send className="mr-2 size-4" aria-hidden="true" />
-            {isSaving ? "Submitting…" : "Submit for review"}
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSaving}
+            onClick={onSubmit}
+          >
+            <Send className="mr-1.5 size-4" aria-hidden="true" />
+            {isSaving ? "Submitting..." : "Submit report"}
           </Button>
         ) : (
-          <Button type="button" disabled={isSaving} onClick={onNextStep}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSaving}
+            onClick={onNextStep}
+          >
             Continue
-            <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+            <ArrowRight className="ml-1.5 size-4" aria-hidden="true" />
           </Button>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2 border-t pt-3">
-        <Button type="button" variant="ghost" size="sm" disabled={isSaving} onClick={onCancel}>
+      <div className="flex items-center gap-2 sm:justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={isSaving}
+          onClick={onCancel}
+        >
           Cancel
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={isSaving} onClick={onSaveDraft}>
-          <Save className="mr-2 size-4" aria-hidden="true" />
-          {isSaving ? "Saving…" : "Save draft"}
-        </Button>
-        <Button type="button" size="sm" disabled={isSaving} onClick={onSubmit}>
-          <Send className="mr-2 size-4" aria-hidden="true" />
-          Submit for review
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isSaving}
+          onClick={onSaveDraft}
+        >
+          <Save className="mr-1.5 size-4" aria-hidden="true" />
+          {isSaving ? "Saving..." : "Save draft"}
         </Button>
       </div>
     </div>

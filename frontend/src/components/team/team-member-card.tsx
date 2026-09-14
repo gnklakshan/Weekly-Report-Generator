@@ -9,8 +9,10 @@ import type { TeamMemberStats } from "@/types";
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 font-mono text-sm font-semibold tabular-nums">{value}</dd>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -24,7 +26,7 @@ export function TeamMemberCard({ stats, avatarUrl }: TeamMemberCardProps) {
   return (
     <Link
       href={`/team/${stats.memberId}`}
-      className="group block rounded-xl border bg-card p-5 shadow-xs transition-colors hover:border-primary/40 hover:bg-muted/20"
+      className="group block rounded-lg border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-muted/20"
     >
       <div className="flex items-start justify-between gap-3">
         <TeamMemberAvatar
@@ -41,9 +43,7 @@ export function TeamMemberCard({ stats, avatarUrl }: TeamMemberCardProps) {
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          This week
-        </span>
+        <span className="text-xs text-muted-foreground">This week</span>
         <ReportStatusBadge status={stats.currentWeekStatus} />
       </div>
 
@@ -58,13 +58,16 @@ export function TeamMemberCard({ stats, avatarUrl }: TeamMemberCardProps) {
         <TriangleAlert
           className={cn(
             "size-3.5 shrink-0",
-            stats.openBlockers > 0 ? "text-destructive" : "text-muted-foreground",
+            stats.openBlockers > 0
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-muted-foreground",
           )}
           aria-hidden="true"
         />
         {stats.openBlockers > 0 ? (
-          <span className="font-medium text-destructive">
-            {stats.openBlockers} open {stats.openBlockers === 1 ? "blocker" : "blockers"}
+          <span className="font-medium text-rose-600 dark:text-rose-400">
+            {stats.openBlockers} open{" "}
+            {stats.openBlockers === 1 ? "blocker" : "blockers"}
           </span>
         ) : (
           <span className="text-muted-foreground">No open blockers</span>

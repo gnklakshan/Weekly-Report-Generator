@@ -21,22 +21,24 @@ function complianceTone(rate: number): MetricTone {
  */
 export function MetricsRow({ metrics, loading = false }: MetricsRowProps) {
   const correctionHint =
-    metrics.needsCorrection === 1 ? "report awaiting correction" : "reports awaiting correction";
+    metrics.needsCorrection === 1
+      ? "report awaiting correction"
+      : "reports awaiting correction";
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <MetricCard
         icon={FileText}
-        label="Total Reports Submitted"
+        label="Reports Submitted"
         value={`${metrics.submittedReports} / ${metrics.expectedReports}`}
         hint={`${metrics.approved} approved`}
         loading={loading}
       />
       <MetricCard
         icon={Gauge}
-        label="Submission Compliance"
+        label="Compliance Rate"
         value={`${metrics.complianceRate}%`}
-        hint="of expected reports submitted"
+        hint="of expected reports"
         tone={complianceTone(metrics.complianceRate)}
         loading={loading}
       />
@@ -52,7 +54,7 @@ export function MetricsRow({ metrics, loading = false }: MetricsRowProps) {
         icon={CircleAlert}
         label="Open Blockers"
         value={`${metrics.openBlockers}`}
-        hint="raised in unapproved reports"
+        hint="in unapproved reports"
         tone={metrics.openBlockers > 0 ? "destructive" : "positive"}
         loading={loading}
       />

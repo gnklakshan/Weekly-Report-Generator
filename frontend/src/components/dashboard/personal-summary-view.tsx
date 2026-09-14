@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingState } from "@/components/common/loading-state";
@@ -32,9 +26,9 @@ function weekValue(notStarted: boolean, value: string): string {
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b py-2 last:border-0">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-medium tabular-nums">{value}</span>
+    <div className="flex items-center justify-between gap-3 border-b py-2.5 last:border-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium tabular-nums">{value}</span>
     </div>
   );
 }
@@ -49,12 +43,10 @@ function MyWeekCard({
   loading: boolean;
 }) {
   return (
-    <Card className="rounded-xl border bg-card">
+    <Card className="rounded-lg border bg-card">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">My week</CardTitle>
-        <CardDescription className="text-xs">
-          {formatWeekRange(week)}
-        </CardDescription>
+        <CardTitle className="text-sm font-medium">My week</CardTitle>
+        <p className="text-xs text-muted-foreground">{formatWeekRange(week)}</p>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -69,13 +61,14 @@ function MyWeekCard({
             description="You have no reporting history for this workspace yet."
           />
         ) : (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-3 py-2">
-              <span className="text-xs text-muted-foreground">
+          <div className="space-y-0">
+            <div className="flex items-center justify-between gap-3 py-2.5">
+              <span className="text-sm text-muted-foreground">
                 Current week status
               </span>
               <ReportStatusBadge status={stats.currentWeekStatus} />
             </div>
+            <div className="border-t" />
             <StatRow
               label="Tasks completed"
               value={weekValue(
@@ -158,11 +151,11 @@ export function PersonalSummaryView() {
   const myStats = data?.teamStats.find((stat) => stat.memberId === user.id);
 
   return (
-    <div className="space-y-6">
-      <Card className="rounded-xl border bg-card">
+    <div className="space-y-5">
+      <Card className="rounded-lg border bg-card">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
           <div className="space-y-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               Reporting week
             </span>
             <WeekStepper
@@ -173,8 +166,8 @@ export function PersonalSummaryView() {
             />
           </div>
           <div className="space-y-1.5 text-right">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              My status this week
+            <span className="text-xs font-medium text-muted-foreground">
+              My status
             </span>
             <div>
               {showData && myStats ? (
@@ -190,13 +183,13 @@ export function PersonalSummaryView() {
       {error ? (
         <ErrorState message={error} onRetry={() => void fetchDashboard()} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {showData ? (
             <MetricsRow metrics={data.metrics} />
           ) : (
             <LoadingState type="cards" rows={4} />
           )}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             <TasksTrendChart data={data?.trend ?? []} loading={isLoading} />
             <MyWeekCard
               stats={myStats}

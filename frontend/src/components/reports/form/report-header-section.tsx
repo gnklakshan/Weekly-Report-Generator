@@ -34,10 +34,10 @@ export function ReportHeaderSection({
   const { control } = useFormContext<ReportFormValues>();
 
   return (
-    <Card>
-      <CardContent className="grid gap-6 p-6 sm:grid-cols-2">
+    <Card className="rounded-lg border">
+      <CardContent className="grid gap-6 p-5 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <FolderKanban className="size-3.5" aria-hidden="true" />
             Assigned project
           </Label>
@@ -63,12 +63,17 @@ export function ReportHeaderSection({
         </div>
 
         <div className="space-y-2">
-          <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <CalendarDays className="size-3.5" aria-hidden="true" />
             Reporting week
           </Label>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={onPreviousWeek}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onPreviousWeek}
+            >
               Prev
             </Button>
             <p
@@ -77,11 +82,21 @@ export function ReportHeaderSection({
             >
               {weekLabel}
             </p>
-            <Button type="button" variant="outline" size="sm" onClick={onNextWeek}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onNextWeek}
+            >
               Next
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={onCurrentWeek}>
-              This week
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCurrentWeek}
+            >
+              Today
             </Button>
           </div>
           <FieldError name="weekStart" />

@@ -10,14 +10,26 @@ interface DashboardChartsProps {
   loading?: boolean;
 }
 
-/** Responsive grid of the four team charts. Config lives in each chart, not here. */
-export function DashboardCharts({ data, loading = false }: DashboardChartsProps) {
+/** 2x2 responsive grid of the four dashboard charts. */
+export function DashboardCharts({
+  data,
+  loading = false,
+}: DashboardChartsProps) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <TasksTrendChart data={data?.trend ?? []} loading={loading} className="lg:col-span-2" />
-      <StatusByMemberChart data={data?.statusByMember ?? []} loading={loading} />
-      <WorkloadByProjectChart data={data?.workloadByProject ?? []} loading={loading} />
-      <TimeByTaskTypeChart data={data?.timeByTaskType ?? []} loading={loading} className="lg:col-span-2" />
+    <div className="grid gap-4 lg:grid-cols-2">
+      <TasksTrendChart data={data?.trend ?? []} loading={loading} />
+      <TimeByTaskTypeChart
+        data={data?.timeByTaskType ?? []}
+        loading={loading}
+      />
+      <StatusByMemberChart
+        data={data?.statusByMember ?? []}
+        loading={loading}
+      />
+      <WorkloadByProjectChart
+        data={data?.workloadByProject ?? []}
+        loading={loading}
+      />
     </div>
   );
 }
