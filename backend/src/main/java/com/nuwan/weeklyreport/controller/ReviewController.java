@@ -22,7 +22,7 @@ public class ReviewController {
     }
 
     @GetMapping("/queue")
-    public ResponseEntity<List<ReviewQueueItemDto>> getReviewQueue(
+    public ResponseEntity<List<ReviewQueueItemDto>> getReportsAwaitingReviewAsQueue(
             @RequestParam String reviewerId) {
         return ResponseEntity.ok(reviewService.getReviewQueue(reviewerId));
     }

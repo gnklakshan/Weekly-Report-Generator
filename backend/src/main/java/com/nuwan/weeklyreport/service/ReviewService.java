@@ -101,7 +101,10 @@ public class ReviewService {
 
         List<ReviewComment> comments = new ArrayList<>(report.getReviewComments());
         comments.add(comment);
-        report.setReviewComments(comments);
+//        report.setReviewComments(comments);
+
+        report.getReviewComments().clear();
+        report.getReviewComments().addAll(comments);
 
         report = reportRepository.save(report);
 
@@ -146,7 +149,10 @@ public class ReviewService {
 
         List<ReviewComment> comments = new ArrayList<>(report.getReviewComments());
         comments.add(comment);
-        report.setReviewComments(comments);
+//        report.setReviewComments(comments);
+
+        report.getReviewComments().clear();
+        report.getReviewComments().addAll(comments);
 
         report = reportRepository.save(report);
 
