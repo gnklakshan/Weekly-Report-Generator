@@ -51,16 +51,21 @@ public class ReportController {
         ReportStatus statusEnum = status != null && !"ALL".equals(status)
                 ? ReportStatus.valueOf(status) : null;
 
+        // DRAFT reports are only visible to their author (the team member).
+        // When an admin views the team-wide list (no authorId, no explicit status),
+        // exclude DRAFTs so only submitted/approved/correction-needed reports appear.
+        boolean excludeDrafts = security.isAdmin() && authorId == null && statusEnum == null;
+
         // If page and size are provided, return paginated response
         if (page != null && size != null) {
             PageResponseDto<ReportResponseDto> paginated = reportService.getReportsPaginated(
-                    authorId, projectId, statusEnum, search, weekStart, from, to, page, size);
+                    authorId, projectId, statusEnum, search, weekStart, from, to, page, size, excludeDrafts);
             return ResponseEntity.ok(paginated);
         }
 
         // Otherwise, return the full list (backward compatible)
         return ResponseEntity.ok(
-                reportService.getReports(authorId, projectId, statusEnum, search, weekStart, from, to));
+                reportService.getReports(authorId, projectId, statusEnum, search, weekStart, from, to, excludeDrafts));
     }
 
     @GetMapping("/{id}")

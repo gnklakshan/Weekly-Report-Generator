@@ -43,6 +43,24 @@ public interface ReportRepository extends JpaRepository<Report, String> {
            "(:status IS NULL OR r.status = :status) AND " +
            "(:weekStart IS NULL OR r.weekStart = :weekStart) AND " +
            "(:from IS NULL OR r.weekStart >= :from) AND " +
+           "(:to IS NULL OR r.weekEnd <= :to) AND " +
+           "(:excludeStatus IS NULL OR r.status <> :excludeStatus) " +
+           "ORDER BY r.weekStart DESC")
+    List<Report> findFilteredExcludingDrafts(
+            @Param("authorId") String authorId,
+            @Param("projectId") String projectId,
+            @Param("status") ReportStatus status,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("excludeStatus") ReportStatus excludeStatus);
+
+    @Query("SELECT r FROM Report r WHERE " +
+           "(:authorId IS NULL OR r.author.id = :authorId) AND " +
+           "(:projectId IS NULL OR r.project.id = :projectId) AND " +
+           "(:status IS NULL OR r.status = :status) AND " +
+           "(:weekStart IS NULL OR r.weekStart = :weekStart) AND " +
+           "(:from IS NULL OR r.weekStart >= :from) AND " +
            "(:to IS NULL OR r.weekEnd <= :to) " +
            "ORDER BY r.weekStart DESC")
     Page<Report> findFilteredPageable(
@@ -52,6 +70,25 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             @Param("weekStart") LocalDate weekStart,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
+            Pageable pageable);
+
+    @Query("SELECT r FROM Report r WHERE " +
+           "(:authorId IS NULL OR r.author.id = :authorId) AND " +
+           "(:projectId IS NULL OR r.project.id = :projectId) AND " +
+           "(:status IS NULL OR r.status = :status) AND " +
+           "(:weekStart IS NULL OR r.weekStart = :weekStart) AND " +
+           "(:from IS NULL OR r.weekStart >= :from) AND " +
+           "(:to IS NULL OR r.weekEnd <= :to) AND " +
+           "(:excludeStatus IS NULL OR r.status <> :excludeStatus) " +
+           "ORDER BY r.weekStart DESC")
+    Page<Report> findFilteredExcludingDraftsPageable(
+            @Param("authorId") String authorId,
+            @Param("projectId") String projectId,
+            @Param("status") ReportStatus status,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("excludeStatus") ReportStatus excludeStatus,
             Pageable pageable);
 
     @Query("SELECT r FROM Report r WHERE r.status = :status ORDER BY r.submittedAt ASC")

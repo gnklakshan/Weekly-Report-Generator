@@ -44,13 +44,16 @@ public class ReportService {
 
     public List<ReportResponseDto> getReports(String authorId, String projectId,
                                               ReportStatus status, String search,
-                                              String weekStart, String from, String to) {
+                                              String weekStart, String from, String to,
+                                              boolean excludeDrafts) {
         LocalDate ws = weekStart != null ? LocalDate.parse(weekStart) : null;
         LocalDate f = from != null ? LocalDate.parse(from) : null;
         LocalDate t = to != null ? LocalDate.parse(to) : null;
         String pid = "ALL".equals(projectId) ? null : projectId;
 
-        List<Report> reports = reportRepository.findFiltered(authorId, pid, status, ws, f, t);
+        List<Report> reports = excludeDrafts
+                ? reportRepository.findFilteredExcludingDrafts(authorId, pid, status, ws, f, t, ReportStatus.DRAFT)
+                : reportRepository.findFiltered(authorId, pid, status, ws, f, t);
 
         if (search != null && !search.isBlank()) {
             String lower = search.toLowerCase();
@@ -65,15 +68,16 @@ public class ReportService {
     public PageResponseDto<ReportResponseDto> getReportsPaginated(String authorId, String projectId,
                                                                    ReportStatus status, String search,
                                                                    String weekStart, String from, String to,
-                                                                   int page, int size) {
+                                                                   int page, int size, boolean excludeDrafts) {
         LocalDate ws = weekStart != null ? LocalDate.parse(weekStart) : null;
         LocalDate f = from != null ? LocalDate.parse(from) : null;
         LocalDate t = to != null ? LocalDate.parse(to) : null;
         String pid = "ALL".equals(projectId) ? null : projectId;
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Report> reportPage = reportRepository.findFilteredPageable(
-                authorId, pid, status, ws, f, t, pageable);
+        Page<Report> reportPage = excludeDrafts
+                ? reportRepository.findFilteredExcludingDraftsPageable(authorId, pid, status, ws, f, t, ReportStatus.DRAFT, pageable)
+                : reportRepository.findFilteredPageable(authorId, pid, status, ws, f, t, pageable);
 
         List<ReportResponseDto> content = reportPage.getContent().stream()
                 .filter(r -> search == null || search.isBlank() || matchesSearch(r, search.toLowerCase()))
