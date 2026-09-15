@@ -5,6 +5,7 @@ import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { TasksTrendChart } from "@/components/charts/tasks-trend-chart";
 import { ReportStatusBadge } from "@/components/reports/report-status-badge";
+import { MetricCard } from "./metric-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
 import { useCallback, useEffect, useState } from "react";
@@ -15,8 +16,8 @@ import type {
   TeamMemberStats,
   WeekRange,
 } from "@/types";
-import { MetricsRow } from "./metrics-row";
 import { WeekStepper } from "./week-stepper";
+import { ClipboardCheck, Clock, AlertTriangle, TrendingUp } from "lucide-react";
 
 const EM_DASH = "—";
 
@@ -106,9 +107,67 @@ function MyWeekCard({
   );
 }
 
+/** Personal KPI tiles — only the signed-in member's own numbers. */
+function PersonalMetricsRow({ stats, loading }: { stats: TeamMemberStats | undefined; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="rounded-lg border bg-card">
+            <CardContent className="p-5">
+              <div className="space-y-3">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+  if (!stats) return null;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <MetricCard
+        icon={ClipboardCheck}
+        label="Reports Submitted"
+        value={`${stats.reportsSubmitted}`}
+        hint={`${stats.approvalRate}% approval rate`}
+        tone={stats.approvalRate >= 80 ? "positive" : stats.approvalRate >= 50 ? "warning" : "default"}
+        loading={loading}
+      />
+      <MetricCard
+        icon={Clock}
+        label="Hours Logged"
+        value={`${stats.hours}h`}
+        hint={`${stats.averageHours}h avg / week`}
+        loading={loading}
+      />
+      <MetricCard
+        icon={TrendingUp}
+        label="Tasks Completed"
+        value={`${stats.tasksCompleted}`}
+        hint="across all reports"
+        loading={loading}
+      />
+      <MetricCard
+        icon={AlertTriangle}
+        label="Open Blockers"
+        value={`${stats.openBlockers}`}
+        hint={stats.openBlockers > 0 ? "needs attention" : "all clear"}
+        tone={stats.openBlockers > 0 ? "destructive" : "positive"}
+        loading={loading}
+      />
+    </div>
+  );
+}
+
 /**
  * Team-member variant of the dashboard. Same `useDashboard` data source, scoped
- * to the signed-in member via `{ memberId }` — never a second data source.
+ * to the signed-in member via `{ memberId }` — shows only personal stats,
+ * never team-wide metrics.
  */
 export function PersonalSummaryView() {
   const { user } = useAuth();
@@ -184,11 +243,7 @@ export function PersonalSummaryView() {
         <ErrorState message={error} onRetry={() => void fetchDashboard()} />
       ) : (
         <div className="space-y-5">
-          {showData ? (
-            <MetricsRow metrics={data.metrics} />
-          ) : (
-            <LoadingState type="cards" rows={4} />
-          )}
+          <PersonalMetricsRow stats={myStats} loading={isLoading} />
           <div className="grid gap-5 lg:grid-cols-2">
             <TasksTrendChart data={data?.trend ?? []} loading={isLoading} />
             <MyWeekCard

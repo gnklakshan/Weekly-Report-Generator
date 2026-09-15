@@ -288,6 +288,20 @@ export function useReportForm(options: UseReportFormOptions = {}) {
     [focusStepForErrors, form, persist],
   );
 
+  /** Draft saves bypass full validation — users can save incomplete reports. */
+  const saveDraft = useCallback(async () => {
+    const values = form.getValues();
+    const cleaned = {
+      ...values,
+      completedTasks: (values.completedTasks ?? []).filter((t) => t.title?.trim()),
+      nextWeekTasks: (values.nextWeekTasks ?? []).filter((t) => t.title?.trim()),
+      blockers: (values.blockers ?? []).filter((b) => b.description?.trim()),
+      achievements: (values.achievements ?? []).filter((a) => a.description?.trim()),
+      links: (values.links ?? []).filter((l) => l.label?.trim() && l.url?.trim()),
+    };
+    await persist(cleaned, "DRAFT");
+  }, [form, persist]);
+
   return {
     form: form as UseFormReturn<ReportFormValues>,
     step,
@@ -306,7 +320,7 @@ export function useReportForm(options: UseReportFormOptions = {}) {
     isDirty: form.formState.isDirty,
     saveError,
     clearSaveError: () => setSaveError(null),
-    saveDraft: () => save("DRAFT"),
+    saveDraft,
     submitForReview: () => save("SUBMIT"),
   };
 }

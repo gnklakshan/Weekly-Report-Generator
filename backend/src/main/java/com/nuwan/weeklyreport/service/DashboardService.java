@@ -37,7 +37,7 @@ public class DashboardService {
 
     public DashboardDto getDashboard(String weekStartStr, String fromStr, String toStr,
                                      String memberId, String projectId, String status) {
-        LocalDate weekStart = weekStartStr != null
+        LocalDate requestedWeek = weekStartStr != null
                 ? LocalDate.parse(weekStartStr)
                 : LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         LocalDate from = fromStr != null ? LocalDate.parse(fromStr) : null;
@@ -49,9 +49,23 @@ public class DashboardService {
                 status != null && !"ALL".equals(status) ? parseReportStatus(status) : null,
                 null, from, to);
 
+        // If the requested week has no reports, fall back to the most recent week with data
         List<Report> weekReports = allReports.stream()
-                .filter(r -> r.getWeekStart().equals(weekStart))
+                .filter(r -> r.getWeekStart().equals(requestedWeek))
                 .toList();
+        LocalDate effectiveWeek = requestedWeek;
+        if (weekReports.isEmpty() && weekStartStr == null) {
+            Optional<LocalDate> latestWeek = allReports.stream()
+                    .map(Report::getWeekStart)
+                    .distinct()
+                    .max(LocalDate::compareTo);
+            if (latestWeek.isPresent()) {
+                effectiveWeek = latestWeek.get();
+                weekReports = allReports.stream()
+                        .filter(r -> r.getWeekStart().equals(effectiveWeek))
+                        .toList();
+            }
+        }
 
         List<User> teamMembers = userRepository.findByRole(UserRole.TEAM_MEMBER);
         if (memberId != null && !"ALL".equals(memberId)) {
