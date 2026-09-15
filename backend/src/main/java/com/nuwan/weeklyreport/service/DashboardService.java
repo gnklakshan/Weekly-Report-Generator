@@ -50,21 +50,25 @@ public class DashboardService {
                 null, from, to);
 
         // If the requested week has no reports, fall back to the most recent week with data
-        List<Report> weekReports = allReports.stream()
+        List<Report> initialWeekReports = allReports.stream()
                 .filter(r -> r.getWeekStart().equals(requestedWeek))
                 .toList();
-        LocalDate effectiveWeek = requestedWeek;
-        if (weekReports.isEmpty() && weekStartStr == null) {
+        final List<Report> weekReports;
+        if (initialWeekReports.isEmpty() && weekStartStr == null) {
             Optional<LocalDate> latestWeek = allReports.stream()
                     .map(Report::getWeekStart)
                     .distinct()
                     .max(LocalDate::compareTo);
             if (latestWeek.isPresent()) {
-                effectiveWeek = latestWeek.get();
+                LocalDate fallbackWeek = latestWeek.get();
                 weekReports = allReports.stream()
-                        .filter(r -> r.getWeekStart().equals(effectiveWeek))
+                        .filter(r -> r.getWeekStart().equals(fallbackWeek))
                         .toList();
+            } else {
+                weekReports = initialWeekReports;
             }
+        } else {
+            weekReports = initialWeekReports;
         }
 
         List<User> teamMembers = userRepository.findByRole(UserRole.TEAM_MEMBER);
