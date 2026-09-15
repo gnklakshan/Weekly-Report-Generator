@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { STORAGE_KEY_SESSION } from "@/lib/constants";
 import type { AuthSession } from "@/types";
 
@@ -13,20 +13,16 @@ interface CacheEntry<T> {
 const cache = new Map<string, CacheEntry<unknown>>();
 const CACHE_TTL = 30000; // 30 seconds
 
-function getCacheKey(endpoint: string): string {
-  return endpoint;
-}
-
 function getCachedData<T>(key: string): T | null {
   const entry = cache.get(key);
   if (!entry) return null;
-  
+
   const isExpired = Date.now() - entry.timestamp > CACHE_TTL;
   if (isExpired) {
     cache.delete(key);
     return null;
   }
-  
+
   return entry.data as T;
 }
 
@@ -39,8 +35,6 @@ export function clearApiCache(): void {
 }
 
 export function useApi() {
-  const abortControllers = useRef(new Map<string, AbortController>());
-
   const getToken = useCallback(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -60,83 +54,61 @@ export function useApi() {
       const token = getToken();
       const method = (options.method || "GET").toUpperCase();
       const isGetRequest = method === "GET";
-      
+
       // Normalize endpoint for cache key
       const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-      const cacheKey = getCacheKey(normalizedEndpoint);
-      
+      const cacheKey = isGetRequest ? `${normalizedEndpoint}:${JSON.stringify(options.headers || {})}` : "";
+
       // Check cache for GET requests
-      if (isGetRequest && !options.headers) {
+      if (isGetRequest) {
         const cachedData = getCachedData<T>(cacheKey);
         if (cachedData !== null) {
           return cachedData;
         }
       }
-      
-      // Cancel any existing request for the same endpoint
-      const existingController = abortControllers.current.get(cacheKey);
-      if (existingController) {
-        existingController.abort();
-      }
-      
-      // Create new abort controller
-      const controller = new AbortController();
-      abortControllers.current.set(cacheKey, controller);
-      
+
       // Ensure we merge headers correctly
       const headers = new Headers(options.headers);
-      
+
       // Default to JSON if not explicitly set and body is not FormData
       if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
         headers.set("Content-Type", "application/json");
       }
-      
+
       // Add Authorization header if token exists
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
 
-      try {
-        const response = await fetch(`${API_BASE_URL}${normalizedEndpoint}`, {
-          ...options,
-          headers,
-          signal: controller.signal,
-        });
+      const response = await fetch(`${API_BASE_URL}${normalizedEndpoint}`, {
+        ...options,
+        headers,
+      });
 
-        if (!response.ok) {
-          let errorMessage = "An error occurred during the API request.";
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          } catch {
-            // If response isn't JSON, leave default message
-          }
-          throw new Error(errorMessage);
+      if (!response.ok) {
+        let errorMessage = "An error occurred during the API request.";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // If response isn't JSON, leave default message
         }
-        
-        // 204 No Content means successful but empty body
-        if (response.status === 204) {
-          abortControllers.current.delete(cacheKey);
-          return undefined as unknown as T;
-        }
-
-        const data = await response.json();
-        
-        // Cache successful GET responses
-        if (isGetRequest) {
-          setCacheData(cacheKey, data);
-        }
-        
-        abortControllers.current.delete(cacheKey);
-        return data;
-      } catch (error) {
-        abortControllers.current.delete(cacheKey);
-        if (error instanceof Error && error.name === "AbortError") {
-          // Request was cancelled, throw a specific error
-          throw new Error("Request cancelled");
-        }
-        throw error;
+        throw new Error(errorMessage);
       }
+
+      // 204 No Content means successful but empty body
+      if (response.status === 204) {
+        return undefined as unknown as T;
+      }
+
+      const data = await response.json();
+
+      // Cache successful GET responses
+      if (isGetRequest) {
+        setCacheData(cacheKey, data);
+      }
+
+      return data;
     },
     [getToken]
   );
